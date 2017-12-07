@@ -15,13 +15,11 @@ object ReadKafkaDemoA extends FireStreaming {
 
     val source = new KafkaDirectSource[String, String, StringDecoder, StringDecoder](ssc)
 
-    val logs = source.getDStream()
+    val logs = source.getDStream[String](_.message())
 
     logs.foreachRDD((rdd, time) => {
       rdd.take(10).foreach(println)
       source.updateZKOffsets(time.milliseconds)
     })
-
-
   }
 }
