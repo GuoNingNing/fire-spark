@@ -2,14 +2,47 @@ package org.fire.spark.streaming.core.plugins.redis
 
 import java.util.concurrent.ConcurrentHashMap
 
-import org.apache.spark.Logging
+import org.slf4j.LoggerFactory
 import redis.clients.jedis.exceptions.JedisConnectionException
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
+
 import scala.collection.JavaConversions._
 
-object RedisConnectionPool extends Logging {
+object RedisConnectionPool {
+
+  lazy val logger = LoggerFactory.getLogger(getClass)
+
   @transient private lazy val pools: ConcurrentHashMap[RedisEndpoint, JedisPool] =
     new ConcurrentHashMap[RedisEndpoint, JedisPool]()
+
+
+  /**
+    * 创建一个Redis连接池
+    *
+    * @param params
+    *        redis.hosts
+    *        redis.port
+    *        redis.quth
+    *        redis.dbnum
+    *        redis.timeout
+    * @return
+    */
+  def connect(params: Map[String, String]): Jedis = {
+
+    val hosts = params("redis.hosts").split(",").map(_.trim)
+    val port = params("redis.port").toInt
+    val auth = params.get("redis.quth")
+    val dbNum = params.getOrElse("redis.dbnum", "0").toInt
+    val timeout = params.getOrElse("redis.timeout", "2000").toInt
+
+    val endpoints = auth match {
+      case Some(_auth) => hosts.map(RedisEndpoint(_, port, auth.get, dbNum, timeout))
+      case None => hosts.map(RedisEndpoint(_, port, dbNum = dbNum, timeout = timeout))
+    }
+
+    connect(endpoints)
+  }
+
 
   /**
     * 随机选择一个 RedisEndpoint 创建 或者获取一个Redis 连接池
@@ -23,7 +56,7 @@ object RedisConnectionPool extends Logging {
     try {
       connect(res(rnd))
     } catch {
-      case e: Exception => logWarning(e.getMessage)
+      case e: Exception => logger.error(e.getMessage)
         connect(res.drop(rnd))
     }
   }

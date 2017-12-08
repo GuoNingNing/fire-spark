@@ -1,8 +1,9 @@
 package org.fire.spark.streaming.core.sources
 
+import org.apache.spark.SparkConf
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.{Logging, SparkConf}
+import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
 
@@ -11,11 +12,14 @@ import scala.reflect.ClassTag
   *
   * 源
   */
-trait Source extends Serializable with Logging {
+trait Source extends Serializable {
+  lazy val logger = LoggerFactory.getLogger(getClass)
   @transient
   val ssc: StreamingContext
   @transient
   lazy val sparkConf: SparkConf = ssc.sparkContext.getConf
+
+  val paramPrefix: String
 
   type SourceType
 

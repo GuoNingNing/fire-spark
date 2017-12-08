@@ -3,7 +3,7 @@ package org.demo
 import kafka.serializer.StringDecoder
 import org.apache.spark.streaming.StreamingContext
 import org.fire.spark.streaming.core.FireStreaming
-import org.fire.spark.streaming.core.sources.KafkaDirectSource
+import org.fire.spark.streaming.core.plugins.kafka.KafkaDirectSource
 
 object ReadKafkaDemoA extends FireStreaming {
   /**
@@ -13,13 +13,15 @@ object ReadKafkaDemoA extends FireStreaming {
     */
   override def handle(ssc: StreamingContext): Unit = {
 
-    val source = new KafkaDirectSource[String, String, StringDecoder, StringDecoder](ssc)
+    val source = new KafkaDirectSource[String, String](ssc)
 
-    val logs = source.getDStream[String](_.message())
+    val logs = source.getDStream[String](_.value())
 
     logs.foreachRDD((rdd, time) => {
       rdd.take(10).foreach(println)
       source.updateZKOffsets(time.milliseconds)
     })
+
+
   }
 }

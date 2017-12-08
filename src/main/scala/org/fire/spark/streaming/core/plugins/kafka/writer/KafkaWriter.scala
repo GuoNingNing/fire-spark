@@ -1,8 +1,8 @@
-package org.fire.spark.streaming.core.plugins.kafka
+package org.fire.spark.streaming.core.plugins.kafka.writer
 
 import java.util.Properties
 
-import kafka.producer.KeyedMessage
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
 
@@ -59,13 +59,20 @@ object KafkaWriter {
   *
   * class ExampleWriter {
   *   val instream = ssc.queueStream(toBe)
-  *   val producerConf = new Properties()
-  *   producerConf.put("serializer.class", "kafka.serializer.DefaultEncoder")
-  *   producerConf.put("key.serializer.class", "kafka.serializer.StringEncoder")
-  *   producerConf.put("metadata.broker.list", "kafka.example.com:5545")
-  *   producerConf.put("request.required.acks", "1")
-  *   instream.writeToKafka(producerConf,
-  *   (x: String) => new KeyedMessage[String,String]("default", null, x))
+  *
+  *   val props = new Properties()
+  *   props.put("bootstrap.servers", "localhost:9092")
+  *   props.put("acks", "all")// ack方式，all，会等所有的commit最慢的方式
+  *   props.put("retries", 0)// 失败是否重试，设置会有可能产生重复数据
+  *   props.put("batch.size", 16384)//对于每个partition的batch buffer大小
+  *   props.put("linger.ms", 1)//等多久，如果buffer没满，比如设为1，即消息发送会多1ms的延迟，如果buffer没满
+  *   props.put("buffer.memory", 33554432)//整个producer可以用于buffer的内存大小
+  *   props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+  *   props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+  *
+  *   instream.writeToKafka(props,
+  *   x => new ProducerRecord[String, String](sinkTopic, UUID.randomUUID().toString, x.toString))
+  *
   *   ssc.start()
   * }
   *
@@ -79,15 +86,15 @@ abstract class KafkaWriter[T: ClassTag]() {
     * the DStream is passed into this function, all data coming from the DStream is written out to
     * Kafka. The properties instance takes the configuration required to connect to the Kafka
     * brokers in the standard Kafka format. The serializerFunc is a function that converts each
-    * element of the RDD to a Kafka [[KeyedMessage]]. This closure should be serializable - so it
+    * element of the RDD to a Kafka [[ProducerRecord]]. This closure should be serializable - so it
     * should use only instances of Serializables.
     *
     * @param producerConfig The configuration that can be used to connect to Kafka
     * @param serializerFunc The function to convert the data from the stream into Kafka
-    *                       [[KeyedMessage]]s.
+    *                       [[ProducerRecord]]s.
     * @tparam K The type of the key
     * @tparam V The type of the value
     *
     */
-  def writeToKafka[K, V](producerConfig: Properties, serializerFunc: T => KeyedMessage[K, V]): Unit
+  def writeToKafka[K, V](producerConfig: Properties, serializerFunc: T => ProducerRecord[K, V]): Unit
 }

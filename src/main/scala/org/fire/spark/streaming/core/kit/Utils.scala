@@ -1,7 +1,7 @@
 package org.fire.spark.streaming.core.kit
 
 import java.io.{File, FileInputStream, IOException, InputStreamReader}
-import java.util.Properties
+import java.util.{Properties, ResourceBundle}
 
 import org.apache.spark.SparkException
 
@@ -32,5 +32,13 @@ object Utils {
     } finally {
       inReader.close()
     }
+
+
+
   }
+
+  def main(args: Array[String]): Unit = {
+
+  }
+
 }

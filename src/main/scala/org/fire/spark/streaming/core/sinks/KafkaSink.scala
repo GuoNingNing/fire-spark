@@ -2,10 +2,10 @@ package org.fire.spark.streaming.core.sinks
 
 import java.util.{Properties, UUID}
 
-import kafka.producer.KeyedMessage
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.{StreamingContext, Time}
-import org.fire.spark.streaming.core.plugins.kafka.KafkaWriter._
+import org.fire.spark.streaming.core.plugins.kafka.writer.KafkaWriter._
 
 import scala.reflect.ClassTag
 
@@ -30,6 +30,6 @@ class KafkaSink[T: ClassTag](val ssc: StreamingContext)
     */
   override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
 
-    rdd.writeToKafka(producerConf, x => new KeyedMessage[String, Array[Byte]](outputTopic, UUID.randomUUID().toString, x.toString.getBytes()))
+    rdd.writeToKafka(producerConf, x => new ProducerRecord[String, String](outputTopic, UUID.randomUUID().toString, x.toString))
   }
 }
