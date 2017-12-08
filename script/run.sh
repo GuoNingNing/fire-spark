@@ -102,12 +102,7 @@ function main(){
 
 	get_param "main" "spark.run.main"
 	get_param "main_jar" "spark.run.main.jar"
-	get_param "appname" "spark.run.appname" "${main}.App"
-	get_param "executor_num" "spark.run.executor.num" "1"
-	get_param "executor_mem" "spark.run.executor.mem" "1G"
-	get_param "executor_core" "spark.run.executor.core" "1"
-	get_param "driver_mem" "spark.run.driver.mem" "1G"
-	get_param "deploy_mode" "spark.run.deploy.mode" "cluster"
+	get_param "appname" "spark.app.name" "${main}.App"
 	get_param "self_param" "spark.run.self.params" "#"
 	get_param "lib_path" "spark.run.lib.path" $(check_proper $proper)
 	set_lib_path "$proper" "lib_path"
@@ -118,30 +113,10 @@ function main(){
 	check_run ${2:-"1"}
 	set_jars
 
-	echo "spark-submit
-	--master yarn
-	--deploy-mode $deploy_mode
-	--driver-memory $driver_mem
-	--executor-memory $executor_mem
-	--executor-cores $executor_core
-	--num-executors $executor_num 
-	$jars
-	--name $appname
-	--properties-file $proper
-	--class $main $main_jar" "${self_params[@]}"
+	echo "spark-submit --name $appname --properties-file $proper $jars --class $main $main_jar" "${self_params[@]}"
 
 	check_command spark-submit
-	spark-submit \
-	--master yarn \
-	--deploy-mode $deploy_mode \
-	--driver-memory $driver_mem \
-	--executor-memory $executor_mem \
-	--executor-cores $executor_core \
-	--num-executors $executor_num \
-	$jars \
-	--name $appname \
-	--properties-file $proper \
-	--class $main $main_jar "${self_params[@]}"
+	spark-submit --name $appname --properties-file $proper $jars --class $main $main_jar "${self_params[@]}"
 }
 
 test $# -eq 0 && { 
