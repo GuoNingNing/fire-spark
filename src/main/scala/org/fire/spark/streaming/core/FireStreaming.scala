@@ -1,5 +1,6 @@
 package org.fire.spark.streaming.core
 
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{CongestionMonitorListener, JobInfoReportListener, Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.fire.spark.streaming.core.kit.Utils
@@ -60,9 +61,11 @@ trait FireStreaming {
 
     init(sparkConf)
 
+    val sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
+
     // 时间间隔
     val slide = sparkConf.get("spark.batch.duration").toInt
-    val sc = new SparkContext(sparkConf)
+    val sc = sparkSession.sparkContext
     val ssc = new StreamingContext(sc, Seconds(slide))
 
     ssc.addStreamingListener(new CongestionMonitorListener(ssc))

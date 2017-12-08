@@ -2,12 +2,16 @@ package org.fire.spark.streaming.core.plugins.redis
 
 import java.util.concurrent.ConcurrentHashMap
 
-import org.apache.spark.Logging
+import org.slf4j.LoggerFactory
 import redis.clients.jedis.exceptions.JedisConnectionException
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
+
 import scala.collection.JavaConversions._
 
-object RedisConnectionPool extends Logging {
+object RedisConnectionPool {
+
+  private lazy val logger = LoggerFactory.getLogger(getClass)
+
   @transient private lazy val pools: ConcurrentHashMap[RedisEndpoint, JedisPool] =
     new ConcurrentHashMap[RedisEndpoint, JedisPool]()
 
@@ -23,7 +27,7 @@ object RedisConnectionPool extends Logging {
     try {
       connect(res(rnd))
     } catch {
-      case e: Exception => logWarning(e.getMessage)
+      case e: Exception => logger.error(e.getMessage)
         connect(res.drop(rnd))
     }
   }

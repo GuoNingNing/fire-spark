@@ -5,10 +5,10 @@ import java.text.SimpleDateFormat
 import java.util.{Properties, UUID}
 
 import _root_.kafka.producer.KeyedMessage
-import org.fire.spark.streaming.core.plugins.kafka.KafkaWriter._
 import org.apache.spark.streaming.kafka.OffsetRange
 import org.apache.spark.streaming.scheduler.{BatchInfo, StreamingListener, StreamingListenerBatchCompleted, StreamingListenerBatchStarted}
 import org.fire.spark.streaming.core.FireConfig
+import org.fire.spark.streaming.core.plugins.kafka.KafkaWriter._
 
 import scala.collection.mutable
 
@@ -29,11 +29,11 @@ class JobInfoReportListener(ssc: StreamingContext) extends StreamingListener wit
   producerConf.put("key.serializer.class", "kafka.serializer.StringEncoder")
   producerConf.put("metadata.broker.list",
     ssc.conf.getOption("spark.monitor.kafka.metadata.broker.list")
-      .getOrElse(config.getString("spark.monitor.kafka.metadata.broker.list")))
+      .getOrElse(config("spark.monitor.kafka.metadata.broker.list")))
 
 
   private val sinkTopic = ssc.conf.getOption("spark.monitor.kafka.topic")
-    .getOrElse(config.getString("spark.monitor.kafka.topic"))
+    .getOrElse(config("spark.monitor.kafka.topic"))
 
   private val sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 

@@ -13,11 +13,14 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.kafka.KafkaCluster.LeaderOffset
-import org.apache.spark.{Logging, SparkException}
+import org.apache.spark.SparkException
+import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
 
-class KafkaManager(val kafkaParams: Map[String, String]) extends Logging with Serializable {
+class KafkaManager(val kafkaParams: Map[String, String]) extends Serializable {
+
+  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   private val kc = new KafkaCluster(kafkaParams)
 
@@ -48,7 +51,7 @@ class KafkaManager(val kafkaParams: Map[String, String]) extends Logging with Se
 
     kafkaParams.get("group.id") match {
       case Some(groupId) =>
-        logInfo(s"createDirectStream witch group.id $groupId topics ${topics.mkString(",")}")
+        logger.info(s"createDirectStream witch group.id $groupId topics ${topics.mkString(",")}")
 
         // 在zookeeper上读取offsets前先根据实际情况更新offsets
         setOrUpdateOffsets(topics, groupId)
@@ -67,14 +70,14 @@ class KafkaManager(val kafkaParams: Map[String, String]) extends Logging with Se
 
         val consumerOffsets = consumerOffsetsE.right.get
 
-        logInfo(s"read topics ==[$topics]== from offsets ==[$consumerOffsets]==")
+        logger.info(s"read topics ==[$topics]== from offsets ==[$consumerOffsets]==")
 
         KafkaUtils.createDirectStream[K, V, KD, VD, R](ssc, kafkaParams, consumerOffsets, messageHandler)
       case None =>
-        logInfo(s"createDirectStream witchout group.id topics ${topics.mkString(",")}")
+        logger.info(s"createDirectStream witchout group.id topics ${topics.mkString(",")}")
         val consumerOffsets = getFromOffsets(kc, kafkaParams, topics)
 
-        logInfo(s"read topics ==[$topics]== from offsets ==[$consumerOffsets]==")
+        logger.info(s"read topics ==[$topics]== from offsets ==[$consumerOffsets]==")
         KafkaUtils.createDirectStream[K, V, KD, VD, R](ssc, kafkaParams, consumerOffsets, messageHandler)
     }
   }
@@ -137,7 +140,7 @@ class KafkaManager(val kafkaParams: Map[String, String]) extends Logging with Se
         consumerOffsets.foreach({ case (tp, n) =>
           val earliestLeaderOffset = earliestLeaderOffsets(tp).offset
           if (n < earliestLeaderOffset) {
-            logInfo("consumer group:" + groupId + ",topic:" + tp.topic + ",partition:" + tp.partition +
+            logger.info("consumer group:" + groupId + ",topic:" + tp.topic + ",partition:" + tp.partition +
               " offsets已经过时，更新为" + earliestLeaderOffset)
             offsets += (tp -> earliestLeaderOffset)
           }
@@ -275,10 +278,10 @@ class KafkaManager(val kafkaParams: Map[String, String]) extends Logging with Se
     * @param offsetMap
     */
   def updateZKOffsets(groupId: String, offsetMap: Map[TopicAndPartition, Long]): Unit = {
-    logInfo(s"update offset group.id : $groupId offsetMap $offsetMap")
+    logger.info(s"update offset group.id : $groupId offsetMap $offsetMap")
     val o = kc.setConsumerOffsets(groupId, offsetMap)
     if (o.isLeft) {
-      logInfo(s"Error updating the offset to Kafka cluster: ${o.left.get}")
+      logger.info(s"Error updating the offset to Kafka cluster: ${o.left.get}")
     }
   }
 

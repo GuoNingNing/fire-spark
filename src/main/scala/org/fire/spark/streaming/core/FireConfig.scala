@@ -1,6 +1,8 @@
 package org.fire.spark.streaming.core
 
-import com.typesafe.config.{Config, ConfigFactory}
+import org.fire.spark.streaming.core.kit.Utils
+
+import scala.collection.Map
 
 
 /**
@@ -9,5 +11,5 @@ import com.typesafe.config.{Config, ConfigFactory}
   * 默认配置
   */
 trait FireConfig {
-  val config: Config = ConfigFactory.load()
+  val config: Map[String, String] = Utils.getPropertiesFromFile("application.properties")
 }

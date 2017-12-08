@@ -4,7 +4,6 @@ package org.apache.spark.streaming
 import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicInteger
 
-import notice.send
 import org.apache.spark.streaming.scheduler._
 import org.fire.spark.streaming.core.FireConfig
 
@@ -39,7 +38,7 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
 
   // 钉钉发送接口
   private lazy val sendApi = conf.getOption("spark.monitor.congestion.send.api")
-    .getOrElse(config.getString("spark.monitor.congestion.send.api"))
+    .getOrElse(config("spark.monitor.congestion.send.api"))
   private lazy val batch = conf.getInt("spark.monitor.congestion.batch", 0)
   // 拥堵多少批次自杀
   private lazy val suicide = conf.getInt("spark.monitor.suicide.batch", 0)

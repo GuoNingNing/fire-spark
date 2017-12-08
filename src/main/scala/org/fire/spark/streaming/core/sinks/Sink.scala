@@ -1,14 +1,16 @@
 package org.fire.spark.streaming.core.sinks
 
-import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.{StreamingContext, Time}
+import org.slf4j.{Logger, LoggerFactory}
 
 /**
   * Created by guoning on 16/8/2.
   */
-trait Sink[T] extends Serializable with Logging {
+trait Sink[T] extends Serializable {
+
+  protected lazy val logger: Logger = LoggerFactory.getLogger(getClass)
 
   @transient
   val ssc: StreamingContext

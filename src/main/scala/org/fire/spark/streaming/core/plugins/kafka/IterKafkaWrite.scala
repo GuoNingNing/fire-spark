@@ -4,6 +4,7 @@ import java.util.Properties
 
 import kafka.producer.{KeyedMessage, Producer}
 
+import scala.annotation.meta.param
 import scala.reflect.ClassTag
 
 /**
@@ -11,7 +12,7 @@ import scala.reflect.ClassTag
   *
   * A simple Kafka producers
   */
-class IterKafkaWrite[T: ClassTag](@transient msg: Iterator[T]) extends KafkaWriter[T] {
+class IterKafkaWrite[T: ClassTag](@(transient @param) msg: Iterator[T]) extends KafkaWriter[T] {
   /**
     * To write data from a Iterator to Kafka, call this function after creating the Iterator. Once
     * the Iterator is passed into this function, all data coming from the Iterator is written out to
