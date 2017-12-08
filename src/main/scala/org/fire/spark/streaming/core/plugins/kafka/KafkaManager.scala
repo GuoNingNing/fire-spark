@@ -34,17 +34,12 @@ class KafkaManager(val kafkaParams: Map[String, String]) extends Logging with Se
     * @tparam VD
     * @return
     */
-  def createDirectStream[K: ClassTag, V: ClassTag, KD <: Decoder[K] : ClassTag, VD <: Decoder[V] : ClassTag](ssc: StreamingContext,
-                                                                                                             kafkaParams: Map[String, String],
-                                                                                                             topics: Set[String]): InputDStream[(K, V)] = {
-    createDirectStream(ssc, kafkaParams, topics, (mmd: MessageAndMetadata[K, V]) => (mmd.key, mmd.message))
-  }
-
-  def createDirectStream[K: ClassTag, V: ClassTag, KD <: Decoder[K] : ClassTag, VD <: Decoder[V] : ClassTag, R: ClassTag](ssc: StreamingContext,
-                                                                                                                          kafkaParams: Map[String, String],
-                                                                                                                          topics: Set[String],
-                                                                                                                          messageHandler: MessageAndMetadata[K, V] => R
-                                                                                                                         ): InputDStream[R] = {
+  def createDirectStream[K: ClassTag, V: ClassTag, KD <: Decoder[K] : ClassTag,
+                         VD <: Decoder[V] : ClassTag, R: ClassTag](ssc: StreamingContext,
+                                            kafkaParams: Map[String, String],
+                                            topics: Set[String],
+                                            messageHandler: MessageAndMetadata[K, V] => R
+                                           ): InputDStream[R] = {
 
     kafkaParams.get("group.id") match {
       case Some(groupId) =>
