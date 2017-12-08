@@ -6,13 +6,17 @@ import org.slf4j.LoggerFactory
 import redis.clients.jedis.exceptions.JedisConnectionException
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
+import scala.annotation.meta.getter
 import scala.collection.JavaConversions._
+import scala.util.Try
 
 object RedisConnectionPool {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
 
-  @transient private lazy val pools: ConcurrentHashMap[RedisEndpoint, JedisPool] =
+  @transient
+  @getter
+  private lazy val pools: ConcurrentHashMap[RedisEndpoint, JedisPool] =
     new ConcurrentHashMap[RedisEndpoint, JedisPool]()
 
 
@@ -22,23 +26,20 @@ object RedisConnectionPool {
     * @param params
     *        redis.hosts
     *        redis.port
-    *        redis.quth
+    *        redis.auth
     *        redis.dbnum
     *        redis.timeout
     * @return
     */
   def connect(params: Map[String, String]): Jedis = {
 
-    val hosts = params("redis.hosts").split(",").map(_.trim)
-    val port = params("redis.port").toInt
-    val auth = params.get("redis.quth")
+    val hosts = params.getOrElse("redis.hosts", "localhost").split(",").map(_.trim)
+    val port = params.getOrElse("redis.port", "6379").toInt
+    val auth = Try(params("redis.auth")) getOrElse null
     val dbNum = params.getOrElse("redis.dbnum", "0").toInt
     val timeout = params.getOrElse("redis.timeout", "2000").toInt
 
-    val endpoints = auth match {
-      case Some(_auth) => hosts.map(RedisEndpoint(_, port, auth.get, dbNum, timeout))
-      case None => hosts.map(RedisEndpoint(_, port, dbNum = dbNum, timeout = timeout))
-    }
+    val endpoints = hosts.map(RedisEndpoint(_, port, auth, dbNum, timeout))
 
     connect(endpoints)
   }

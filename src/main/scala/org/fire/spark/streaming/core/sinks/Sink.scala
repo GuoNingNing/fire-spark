@@ -5,6 +5,8 @@ import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.{StreamingContext, Time}
 import org.slf4j.LoggerFactory
 
+import scala.annotation.meta.getter
+
 /**
   * Created by guoning on 16/8/2.
   */
@@ -12,9 +14,9 @@ trait Sink[T] extends Serializable {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
 
-  @transient
+  @(transient @getter)
   val ssc: StreamingContext
-  @transient
+  @(transient @getter)
   lazy val sparkConf = ssc.sparkContext.getConf
 
   /**
