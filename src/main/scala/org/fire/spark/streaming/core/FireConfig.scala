@@ -3,6 +3,7 @@ package org.fire.spark.streaming.core
 import org.fire.spark.streaming.core.kit.Utils
 
 import scala.collection.Map
+import scala.util.Try
 
 
 /**
@@ -11,5 +12,7 @@ import scala.collection.Map
   * 默认配置
   */
 trait FireConfig {
-  val config: Map[String, String] = Utils.getPropertiesFromFile("application.properties")
+  val config: Map[String, String] = Try {
+    Utils.getPropertiesFromFile("application.properties")
+  } getOrElse Map.empty[String, String]
 }
