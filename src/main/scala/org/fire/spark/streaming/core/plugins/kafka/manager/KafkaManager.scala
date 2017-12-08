@@ -19,10 +19,11 @@ import scala.reflect.ClassTag
 private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
 
 
-  private val offsetsManager =
-    sparkConf.get("spark.source.kafka.offset.store.type").trim.toLowerCase match {
+  private lazy val offsetsManager =
+    sparkConf.get("spark.source.kafka.offset.store.type", "none").trim.toLowerCase match {
       case "redis" => new RedisOffsetsManager(sparkConf)
       case "hbase" => new HbaseOffsetsManager(sparkConf)
+      case "none" => new DefaultOffsetsManager(sparkConf)
       case other => throw new IllegalArgumentException(s"目前只支持【redis】来存储 offsets 不支持【$other】请检查你的参数【offset.store.type】")
     }
 
@@ -87,7 +88,7 @@ trait OffsetsManager extends Logging {
     .getAllWithPrefix(s"spark.source.kafka.offset.store.")
     .toMap
 
-  lazy val storeType: String = storeParams("type")
+  lazy val storeType: String = storeParams.getOrElse("type", "none")
 
   /**
     * 获取存储的Offset

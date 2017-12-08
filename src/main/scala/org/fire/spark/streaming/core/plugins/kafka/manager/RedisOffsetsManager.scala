@@ -16,7 +16,7 @@ import scala.collection.JavaConversions._
 private[kafka] class RedisOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
 
 
-  val jedis: Jedis = RedisConnectionPool.connect(storeParams)
+  private lazy val jedis: Jedis = RedisConnectionPool.connect(storeParams)
 
   override def getOffsets(groupId: String, topics: Set[String]): Map[TopicPartition, Long] = {
 

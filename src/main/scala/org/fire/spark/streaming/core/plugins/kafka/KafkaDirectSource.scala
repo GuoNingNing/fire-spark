@@ -25,7 +25,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
                                                   specialKafkaParams: Map[String, String] = Map.empty[String, String])
   extends Source {
 
-  override val paramPrefix: String = "spark.source.kafka."
+  override val paramPrefix: String = "spark.source.kafka.consume."
 
   // 保存 offset
   private lazy val offsetRanges: java.util.Map[Long, Array[OffsetRange]] = new ConcurrentHashMap[Long, Array[OffsetRange]]
@@ -39,8 +39,9 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
 
   // 组装 Kafka 参数
   private lazy val kafkaParams: Map[String, String] = {
-    sparkConf.getAll.map {
-      case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => k.substring(19) -> v
+    sparkConf.getAll.flatMap {
+      case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => Some(k.substring(27) -> v)
+      case _ => None
     } toMap
   } ++ specialKafkaParams
 
