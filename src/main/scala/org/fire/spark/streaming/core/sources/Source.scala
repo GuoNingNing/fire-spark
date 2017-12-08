@@ -5,6 +5,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.slf4j.LoggerFactory
 
+import scala.annotation.meta.getter
 import scala.reflect.ClassTag
 
 /**
@@ -14,9 +15,9 @@ import scala.reflect.ClassTag
   */
 trait Source extends Serializable {
   lazy val logger = LoggerFactory.getLogger(getClass)
-  @transient
+  @(transient@getter)
   val ssc: StreamingContext
-  @transient
+  @(transient@getter)
   lazy val sparkConf: SparkConf = ssc.sparkContext.getConf
 
   val paramPrefix: String
