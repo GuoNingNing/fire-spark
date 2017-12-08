@@ -1,7 +1,7 @@
 package org.fire.spark.streaming.core
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 /**
   * Created by guoning on 16/6/15.
@@ -15,7 +15,7 @@ object SQLContextSingleton {
 
   def getInstance(@transient sparkContext: SparkContext): SQLContext = {
     if (instance == null) {
-      instance = new SQLContext(sparkContext)
+      instance = SparkSession.builder().getOrCreate().sqlContext
     }
     instance
   }

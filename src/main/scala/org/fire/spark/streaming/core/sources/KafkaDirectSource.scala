@@ -8,6 +8,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.{HasOffsetRanges, KafkaManager, OffsetRange}
 
+import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util.Try
 
@@ -21,7 +22,7 @@ import scala.util.Try
 class KafkaDirectSource[K: ClassTag, V: ClassTag, KD <: Decoder[K] : ClassTag, VD <: Decoder[V] : ClassTag](@transient val ssc: StreamingContext,
                                                                                                             specialKafkaParams: Map[String, String] = Map.empty[String, String])
   extends Source {
-  override val paramPrefix: String = "spark.source.kafka."
+  override val paramPrefix: String = "spark.source.kafka.consume."
 
   // 保存 offset
   private lazy val offsetRanges: java.util.Map[Long, Array[OffsetRange]] = new ConcurrentHashMap[Long, Array[OffsetRange]]
@@ -35,8 +36,9 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag, KD <: Decoder[K] : ClassTag, V
 
   // 组装 Kafka 参数
   private lazy val kafkaParams: Map[String, String] = {
-    sparkConf.getAll.map {
-      case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => k.substring(19) -> v
+    sparkConf.getAll.flatMap {
+      case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => Some(k.substring(27) -> v)
+      case _ => None
     } toMap
   } ++ specialKafkaParams
 

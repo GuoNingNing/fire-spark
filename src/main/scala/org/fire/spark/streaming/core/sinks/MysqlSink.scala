@@ -3,7 +3,7 @@ package org.fire.spark.streaming.core.sinks
 import java.util.Properties
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.streaming.{StreamingContext, Time}
 import org.fire.spark.streaming.core.SQLContextSingleton
 
@@ -47,7 +47,7 @@ class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override
     * @param time
     */
   override def output(rdd: RDD[T], time: Time): Unit = {
-    val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
+    val sqlContext = SparkSession.builder().getOrCreate().sqlContext
     import sqlContext.implicits._
     //
     val begin = System.currentTimeMillis()

@@ -54,18 +54,19 @@ trait FireStreaming {
 
     // 约定传入此参数,则表示本地 Debug
     if (sparkConf.contains("spark.properties.file")) {
+      sparkConf.setAll(Utils.getPropertiesFromFile(sparkConf.get("spark.properties.file")))
       sparkConf.setAppName("LocalDebug").setMaster("local[*]")
       sparkConf.set("spark.streaming.kafka.maxRatePerPartition", "10")
-      sparkConf.setAll(Utils.getPropertiesFromFile(sparkConf.get("spark.properties.file")))
     }
 
     init(sparkConf)
 
-    val sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
+    //    val sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
 
     // 时间间隔
     val slide = sparkConf.get("spark.batch.duration").toInt
-    val sc = sparkSession.sparkContext
+    //    val sc = sparkSession.sparkContext
+    val sc = new SparkContext(sparkConf)
     val ssc = new StreamingContext(sc, Seconds(slide))
 
     ssc.addStreamingListener(new CongestionMonitorListener(ssc))

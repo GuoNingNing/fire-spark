@@ -5,9 +5,10 @@ import java.util.Properties
 import kafka.producer.KeyedMessage
 import org.apache.spark.streaming.dstream.DStream
 
+import scala.annotation.meta.param
 import scala.reflect.ClassTag
 
-class DStreamKafkaWriter[T: ClassTag](@transient dstream: DStream[T]) extends KafkaWriter[T] {
+class DStreamKafkaWriter[T: ClassTag](@(transient @param) dstream: DStream[T]) extends KafkaWriter[T] {
 
   /**
    * To write data from a DStream to Kafka, call this function after creating the DStream. Once
