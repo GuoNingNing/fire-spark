@@ -6,7 +6,7 @@ import kafka.message.MessageAndMetadata
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.streaming.kafka010.{HasOffsetRanges, OffsetRange}
+import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges, OffsetRange}
 import org.fire.spark.streaming.core.plugins.kafka.manager.KafkaManager
 import org.fire.spark.streaming.core.sources.Source
 
@@ -29,6 +29,8 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
 
   // 保存 offset
   private lazy val offsetRanges: java.util.Map[Long, Array[OffsetRange]] = new ConcurrentHashMap[Long, Array[OffsetRange]]
+
+  private var canCommitOffsets: CanCommitOffsets = _
 
   // 分区数
   private lazy val repartition: Int = sparkConf.get("spark.source.kafka.consume.repartition", "0").toInt
@@ -58,11 +60,15 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
     * @return
     */
   override def getDStream[R: ClassTag](messageHandler: ConsumerRecord[K, V] => R): DStream[R] = {
-    km.createDirectStream[K, V](ssc, kafkaParams, topicSet)
+    val stream = km.createDirectStream[K, V](ssc, kafkaParams, topicSet)
       .transform((rdd, time) => {
         offsetRanges.put(time.milliseconds, rdd.asInstanceOf[HasOffsetRanges].offsetRanges)
         rdd
-      }).map(messageHandler)
+      })
+
+    canCommitOffsets = stream.asInstanceOf[CanCommitOffsets]
+
+    stream.map(messageHandler)
   }
 
   /**
@@ -74,8 +80,11 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
     if (groupId.isDefined) {
       logger.info(s"updateOffsets with ${km.offsetManagerType} for time $time offsetRanges: $offsetRanges")
       val offset = offsetRanges.get(time)
-      km.updateOffsets(groupId.get, offset)
-      offsetRanges.remove(time)
+      km.offsetManagerType match {
+        case "self" => canCommitOffsets.commitAsync(offset)
+        case _ => km.updateOffsets(groupId.get, offset)
+      }
     }
+    offsetRanges.remove(time)
   }
 }

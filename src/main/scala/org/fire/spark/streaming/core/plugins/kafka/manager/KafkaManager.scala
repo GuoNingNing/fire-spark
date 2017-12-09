@@ -23,8 +23,8 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
     sparkConf.get("spark.source.kafka.offset.store.type", "none").trim.toLowerCase match {
       case "redis" => new RedisOffsetsManager(sparkConf)
       case "hbase" => new HbaseOffsetsManager(sparkConf)
+      case "self" => new DefaultOffsetsManager(sparkConf)
       case "none" => new DefaultOffsetsManager(sparkConf)
-      case other => throw new IllegalArgumentException(s"目前只支持【redis】来存储 offsets 不支持【$other】请检查你的参数【offset.store.type】")
     }
 
 
