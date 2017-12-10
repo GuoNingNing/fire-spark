@@ -6,6 +6,8 @@ package org.fire.spark.streaming.core.plugins.kafka.manager
   * 封装 Kafka
   */
 
+import java.lang.reflect.Constructor
+
 import kafka.utils.Logging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
@@ -13,19 +15,38 @@ import org.apache.spark.SparkConf
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils, LocationStrategies, OffsetRange}
+import org.fire.spark.streaming.core.kit.Utils
 
 import scala.reflect.ClassTag
 
 private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
 
 
-  private lazy val offsetsManager =
-    sparkConf.get("spark.source.kafka.offset.store.type", "none").trim.toLowerCase match {
-      case "redis" => new RedisOffsetsManager(sparkConf)
-      case "hbase" => new HbaseOffsetsManager(sparkConf)
-      case "self" => new DefaultOffsetsManager(sparkConf)
-      case "none" => new DefaultOffsetsManager(sparkConf)
+  // 自定义
+  private lazy val offsetsManager = {
+    sparkConf.get("spark.source.kafka.offset.store.class", "none").trim match {
+      case "none" =>
+        sparkConf.get("spark.source.kafka.offset.store.type", "none").trim.toLowerCase match {
+          case "redis" => new RedisOffsetsManager(sparkConf)
+          case "hbase" => new HbaseOffsetsManager(sparkConf)
+          case "self" => new DefaultOffsetsManager(sparkConf)
+          case "none" => new DefaultOffsetsManager(sparkConf)
+        }
+      case clazz =>
+
+        logger.info(s"Custom offset management class $clazz")
+        val constructors = {
+          val offsetsManagerClass = Utils.classForName(clazz)
+          offsetsManagerClass
+            .getConstructors
+            .asInstanceOf[Array[Constructor[_ <: SparkConf]]]
+        }
+        val constructorTakingSparkConf = constructors.find { c =>
+          c.getParameterTypes.sameElements(Array(classOf[SparkConf]))
+        }
+        constructorTakingSparkConf.get.newInstance(sparkConf).asInstanceOf[OffsetsManager]
     }
+  }
 
 
   def offsetManagerType = offsetsManager.storeType
