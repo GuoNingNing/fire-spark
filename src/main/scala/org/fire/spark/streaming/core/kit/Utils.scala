@@ -1,9 +1,13 @@
 package org.fire.spark.streaming.core.kit
 
 import java.io.{File, FileInputStream, IOException, InputStreamReader}
+import java.lang.reflect.Constructor
 import java.util.{Properties, ResourceBundle}
 
-import org.apache.spark.SparkException
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
+import org.apache.spark.scheduler.SparkListenerInterface
+import org.apache.spark.util.Utils
+import org.fire.spark.streaming.core.plugins.kafka.manager.{KafkaManager, OffsetsManager}
 
 import scala.collection.Map
 import scala.collection.JavaConverters._
@@ -32,9 +36,10 @@ object Utils {
     } finally {
       inReader.close()
     }
+  }
 
-
-
+  def classForName(className: String): Class[_] = {
+    Class.forName(className, true, Thread.currentThread().getContextClassLoader)
   }
 
   def main(args: Array[String]): Unit = {
