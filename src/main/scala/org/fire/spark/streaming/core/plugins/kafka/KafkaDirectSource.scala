@@ -61,14 +61,11 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
     */
   override def getDStream[R: ClassTag](messageHandler: ConsumerRecord[K, V] => R): DStream[R] = {
     val stream = km.createDirectStream[K, V](ssc, kafkaParams, topicSet)
-      .transform((rdd, time) => {
-        offsetRanges.put(time.milliseconds, rdd.asInstanceOf[HasOffsetRanges].offsetRanges)
-        rdd
-      })
-
     canCommitOffsets = stream.asInstanceOf[CanCommitOffsets]
-
-    stream.map(messageHandler)
+    stream.transform((rdd, time) => {
+      offsetRanges.put(time.milliseconds, rdd.asInstanceOf[HasOffsetRanges].offsetRanges)
+      rdd
+    }).map(messageHandler)
   }
 
   /**
