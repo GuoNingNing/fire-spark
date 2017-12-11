@@ -78,7 +78,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
       logger.info(s"updateOffsets with ${km.offsetManagerType} for time $time offsetRanges: $offsetRanges")
       val offset = offsetRanges.get(time)
       km.offsetManagerType match {
-        case "self" => canCommitOffsets.commitAsync(offset)
+        case "kafka" => canCommitOffsets.commitAsync(offset)
         case _ => km.updateOffsets(groupId.get, offset)
       }
     }

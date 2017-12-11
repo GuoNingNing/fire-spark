@@ -7,14 +7,16 @@ package org.fire.spark.streaming.core.plugins.kafka.manager
   */
 
 import java.lang.reflect.Constructor
+import java.{util => ju}
 
 import kafka.utils.Logging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
-import org.apache.spark.SparkConf
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.InputDStream
-import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils, LocationStrategies, OffsetRange}
+import org.apache.spark.streaming.kafka010._
 import org.fire.spark.streaming.core.kit.Utils
 
 import scala.reflect.ClassTag
@@ -29,7 +31,7 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
         sparkConf.get("spark.source.kafka.offset.store.type", "none").trim.toLowerCase match {
           case "redis" => new RedisOffsetsManager(sparkConf)
           case "hbase" => new HbaseOffsetsManager(sparkConf)
-          case "self" => new DefaultOffsetsManager(sparkConf)
+          case "kafka" => new DefaultOffsetsManager(sparkConf)
           case "none" => new DefaultOffsetsManager(sparkConf)
         }
       case clazz =>
@@ -51,6 +53,17 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
 
   def offsetManagerType = offsetsManager.storeType
 
+
+  /**
+    * 从Kafka创建一个 InputDStream[ConsumerRecord[K, V]]
+    *
+    * @param ssc
+    * @param kafkaParams
+    * @param topics
+    * @tparam K
+    * @tparam V
+    * @return
+    */
   def createDirectStream[K: ClassTag, V: ClassTag](ssc: StreamingContext,
                                                    kafkaParams: Map[String, Object],
                                                    topics: Set[String]
@@ -82,6 +95,23 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
       )
     }
 
+  }
+
+  /**
+    *
+    * @param sc
+    * @param kafkaParams
+    * @param offsetRanges
+    * @param locationStrategy
+    * @tparam K
+    * @tparam V
+    * @return
+    */
+  def createRDD[K: ClassTag, V: ClassTag](sc: SparkContext,
+                                          kafkaParams: ju.Map[String, Object],
+                                          offsetRanges: Array[OffsetRange],
+                                          locationStrategy: LocationStrategy): RDD[ConsumerRecord[K, V]] = {
+    KafkaUtils.createRDD(sc, kafkaParams, offsetRanges, locationStrategy)
   }
 
 
