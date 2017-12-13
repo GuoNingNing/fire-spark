@@ -9,7 +9,7 @@ package org.fire.spark.streaming.core.plugins.kafka.manager
 import java.lang.reflect.Constructor
 import java.{util => ju}
 
-import kafka.utils.Logging
+import org.apache.spark.streaming.FireSparkLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.rdd.RDD
@@ -21,7 +21,7 @@ import org.fire.spark.streaming.core.kit.Utils
 
 import scala.reflect.ClassTag
 
-private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
+private[kafka] class KafkaManager(val sparkConf: SparkConf) extends FireSparkLogging {
 
 
   // 自定义
@@ -36,7 +36,7 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
         }
       case clazz =>
 
-        logger.info(s"Custom offset management class $clazz")
+        logInfo(s"Custom offset management class $clazz")
         val constructors = {
           val offsetsManagerClass = Utils.classForName(clazz)
           offsetsManagerClass
@@ -74,16 +74,16 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
     kafkaParams.get("group.id") match {
       case Some(groupId) =>
 
-        logger.info(s"createDirectStream witch group.id $groupId topics ${topics.mkString(",")}")
+        logInfo(s"createDirectStream witch group.id $groupId topics ${topics.mkString(",")}")
 
         consumerOffsets = offsetsManager.getOffsets(groupId.toString, topics)
 
       case _ =>
-        logger.info(s"createDirectStream witchout group.id topics ${topics.mkString(",")}")
+        logInfo(s"createDirectStream witchout group.id topics ${topics.mkString(",")}")
     }
 
     if (consumerOffsets.nonEmpty) {
-      logger.info(s"read topics ==[$topics]== from offsets ==[$consumerOffsets]==")
+      logInfo(s"read topics ==[$topics]== from offsets ==[$consumerOffsets]==")
       KafkaUtils.createDirectStream[K, V](ssc,
         LocationStrategies.PreferConsistent,
         ConsumerStrategies.Assign[K, V](consumerOffsets.keys, kafkaParams, consumerOffsets)
@@ -131,7 +131,7 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging {
 /**
   * Offset 管理
   */
-trait OffsetsManager extends Logging {
+trait OffsetsManager extends FireSparkLogging {
 
   val sparkConf: SparkConf
 

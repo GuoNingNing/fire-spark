@@ -27,7 +27,7 @@ private[kafka] class RedisOffsetsManager(val sparkConf: SparkConf) extends Offse
         }
       })
 
-    logger.info(s"getOffsets [$groupId,${offsets.mkString(",")}] ")
+    logInfo(s"getOffsets [$groupId,${offsets.mkString(",")}] ")
 
     offsets.toMap
   }
@@ -38,13 +38,13 @@ private[kafka] class RedisOffsetsManager(val sparkConf: SparkConf) extends Offse
     for ((tp, offset) <- offsetInfos) {
       jedis.hset(generateKey(groupId, tp.topic), tp.partition().toString, offset.toString)
     }
-    logger.info(s"updateOffsets [ $groupId,${offsetInfos.mkString(",")} ]")
+    logInfo(s"updateOffsets [ $groupId,${offsetInfos.mkString(",")} ]")
   }
 
   override def delOffsets(groupId: String, topics: Set[String]): Unit = {
     for (topic <- topics) {
       jedis.del(generateKey(groupId, topic))
     }
-    logger.info(s"delOffsets [ $groupId,${topics.mkString(",")} ]")
+    logInfo(s"delOffsets [ $groupId,${topics.mkString(",")} ]")
   }
 }
