@@ -84,7 +84,7 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
 
       })
 
-    logger.info(s"getOffsets [$groupId,${offsets.mkString(",")}] ")
+    logInfo(s"getOffsets [$groupId,${offsets.mkString(",")}] ")
 
     offsets.toMap
   }
@@ -107,6 +107,6 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
       table.put(put)
 
     }
-    logger.info(s"updateOffsets [ $groupId,${offsetInfos.mkString(",")} ]")
+    logInfo(s"updateOffsets [ $groupId,${offsetInfos.mkString(",")} ]")
   }
 }
