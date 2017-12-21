@@ -19,7 +19,7 @@ object ReadKafkaDemoA extends FireStreaming {
 
     logs.foreachRDD((rdd, time) => {
       rdd.take(10).foreach(println)
-      source.updateZKOffsets(time.milliseconds)
+      source.updateOffsets(time.milliseconds)
     })
 
 
