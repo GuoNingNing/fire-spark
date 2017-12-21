@@ -23,4 +23,6 @@ class ShowSink[T](val ssc: StreamingContext) extends Sink[T] {
     if (firstNum.length > 10) println("...")
     println()
   }
+
+  override val paramPrefix: String = ""
 }

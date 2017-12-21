@@ -6,6 +6,7 @@ import org.apache.spark.streaming.{StreamingContext, Time}
 import org.slf4j.LoggerFactory
 
 import scala.annotation.meta.getter
+import scala.util.Try
 
 /**
   * Created by guoning on 16/8/2.
@@ -18,6 +19,13 @@ trait Sink[T] extends Serializable {
   val ssc: StreamingContext
   @(transient @getter)
   lazy val sparkConf = ssc.sparkContext.getConf
+
+  val paramPrefix: String
+
+  lazy val param: Map[String, String] = sparkConf.getAll.flatMap {
+    case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => Some(k.substring(27) -> v)
+    case _ => None
+  } toMap
 
   /**
     * 输出

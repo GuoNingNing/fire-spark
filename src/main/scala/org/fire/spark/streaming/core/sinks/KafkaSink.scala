@@ -7,6 +7,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.{StreamingContext, Time}
 import org.fire.spark.streaming.core.plugins.kafka.writer.KafkaWriter._
 
+import scala.collection.JavaConversions._
+import scala.collection.Map
 import scala.reflect.ClassTag
 
 /**
@@ -14,15 +16,16 @@ import scala.reflect.ClassTag
   *
   * 输出到kafka
   */
-class KafkaSink[T: ClassTag](val ssc: StreamingContext)
+class KafkaSink[T: ClassTag](val ssc: StreamingContext, initParams: Map[String, String] = Map.empty[String, String])
   extends Sink[T] {
 
-  private val producerConf = new Properties()
-  producerConf.put("serializer.class", "kafka.serializer.DefaultEncoder")
-  producerConf.put("key.serializer.class", "kafka.serializer.StringEncoder")
-  producerConf.put("metadata.broker.list", sparkConf.get("spark.sink.kafka.metadata.broker.list"))
+  lazy val prop: Properties = {
+    val p = new Properties()
+    p.putAll(param ++ initParams)
+    p
+  }
 
-  private val outputTopic = sparkConf.get("spark.sink.kafka.topic")
+  lazy val outputTopic: String = prop.getProperty("topic")
 
   /**
     * 以字符串的形式输出到kafka
@@ -30,6 +33,8 @@ class KafkaSink[T: ClassTag](val ssc: StreamingContext)
     */
   override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
 
-    rdd.writeToKafka(producerConf, x => new ProducerRecord[String, String](outputTopic, UUID.randomUUID().toString, x.toString))
+    rdd.writeToKafka(prop, x => new ProducerRecord[String, String](outputTopic, UUID.randomUUID().toString, x.toString))
   }
+
+  override val paramPrefix: String = "spark.sink.kafka"
 }
