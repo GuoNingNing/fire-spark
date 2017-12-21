@@ -72,7 +72,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
     * 更新Offset 操作 一定要放在所有逻辑代码的最后
     * 这样才能保证,只有action执行成功后才更新offset
     */
-  def updateZKOffsets(time: Long): Unit = {
+  def updateOffsets(time: Long): Unit = {
     // 更新 offset
     if (groupId.isDefined) {
       logger.info(s"updateOffsets with ${km.offsetManagerType} for time $time offsetRanges: $offsetRanges")
