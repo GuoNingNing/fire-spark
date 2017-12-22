@@ -2,15 +2,16 @@ package org.fire.spark.streaming.core.sinks
 
 import java.util.Properties
 
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.streaming.{StreamingContext, Time}
+import org.apache.spark.streaming.Time
 import org.fire.spark.streaming.core.SQLContextSingleton
 
+import scala.collection.JavaConversions._
 import scala.collection.Map
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
-import scala.collection.JavaConversions._
 
 /**
   * Created by guoning on 16/8/3.
@@ -20,7 +21,7 @@ import scala.collection.JavaConversions._
   * 序列化有问题,暂不支持 checkpoint
   *
   */
-class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override val ssc: StreamingContext, initParams: Map[String, String] = Map.empty[String, String])
+class MysqlSink[T <: scala.Product : ClassTag : TypeTag](val sc: SparkContext, initParams: Map[String, String] = Map.empty[String, String])
   extends Sink[T] {
 
 
@@ -67,6 +68,6 @@ class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override val ssc: Strea
     logger.info(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
   }
 
-  override val paramPrefix: String = "spark.sink.mysql"
+  override val paramPrefix: String = "spark.sink.mysql."
 }
 

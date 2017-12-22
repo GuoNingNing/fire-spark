@@ -1,5 +1,6 @@
 package org.fire.spark.streaming.core.sinks
 
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.{StreamingContext, Time}
@@ -16,9 +17,9 @@ trait Sink[T] extends Serializable {
   lazy val logger = LoggerFactory.getLogger(getClass)
 
   @(transient @getter)
-  val ssc: StreamingContext
+  val sc: SparkContext
   @(transient @getter)
-  lazy val sparkConf = ssc.sparkContext.getConf
+  lazy val sparkConf = sc.getConf
 
   val paramPrefix: String
 
