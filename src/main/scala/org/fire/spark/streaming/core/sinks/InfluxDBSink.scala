@@ -47,3 +47,7 @@ class InfluxDBSink[T : ClassTag](@transient
   }
 
 }
+
+object InfluxDBSink {
+  def apply(ssc : StreamingContext) = new InfluxDBSink[String](ssc)
+}
