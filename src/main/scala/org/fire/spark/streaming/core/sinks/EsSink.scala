@@ -26,7 +26,10 @@ class EsSink[T](val sc: SparkContext, initParams: Map[String, String] = Map.empt
     *
     */
   def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
-    EsSpark.saveToEs(rdd, s"$index/$esType", esParams ++ initParams)
+    rdd match {
+      case _: RDD[String] => EsSpark.saveJsonToEs(rdd, s"$index/$esType", esParams)
+      case _ => EsSpark.saveToEs(rdd, s"$index/$esType", esParams)
+    }
   }
 
   override val paramPrefix: String = "spark.sink.es."
