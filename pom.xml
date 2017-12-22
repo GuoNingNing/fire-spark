@@ -162,6 +162,12 @@
             <version>9.3.6.v20151106</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-http_2.11</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
 
     </dependencies>
 
