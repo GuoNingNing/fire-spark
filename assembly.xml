@@ -4,10 +4,21 @@
         <format>tar.gz</format>
     </formats>
     <dependencySets>
+
+
         <dependencySet>
             <useProjectArtifact>true</useProjectArtifact>
             <outputDirectory>lib</outputDirectory>
-            <scope>runtime</scope>
+            <includes>
+                <include>${project.groupId}:${project.artifactId}</include>
+            </includes>
+        </dependencySet>
+
+        <dependencySet>
+            <useProjectArtifact>true</useProjectArtifact>
+            <outputDirectory>lib</outputDirectory>
+            <useProjectAttachments>true</useProjectAttachments>
+            <scope>provided</scope>
         </dependencySet>
     </dependencySets>
     <fileSets>
@@ -18,7 +29,7 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/deploy</directory>
+            <directory>deploy</directory>
             <outputDirectory>/</outputDirectory>
         </fileSet>
     </fileSets>

@@ -2,10 +2,10 @@ package org.fire.spark.streaming.core.sinks
 
 import java.util.Properties
 
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SaveMode, SparkSession}
-import org.apache.spark.streaming.{StreamingContext, Time}
-import org.fire.spark.streaming.core.SQLContextSingleton
+import org.apache.spark.streaming.Time
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
@@ -19,7 +19,7 @@ import scala.reflect.runtime.universe.TypeTag
   *
   */
 class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override
-                                                         val ssc: StreamingContext)
+                                                         val sc: SparkContext)
   extends Sink[T] {
 
 
@@ -60,5 +60,7 @@ class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override
 
     logger.info(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
   }
+
+  override val paramPrefix = "spark.sink.es.mysql."
 }
 

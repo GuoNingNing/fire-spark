@@ -1,5 +1,6 @@
 package org.fire.spark.streaming.core.sinks
 
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.{StreamingContext, Time}
@@ -7,7 +8,7 @@ import org.apache.spark.streaming.{StreamingContext, Time}
 /**
   * Created by guoning on 16/8/4.
   */
-class ShowSink[T](val ssc: StreamingContext) extends Sink[T] {
+class ShowSink[T](val sc: SparkContext) extends Sink[T] {
 
 
   /**
@@ -23,4 +24,7 @@ class ShowSink[T](val ssc: StreamingContext) extends Sink[T] {
     if (firstNum.length > 10) println("...")
     println()
   }
+
+  override val sc = _
+  override val paramPrefix = "spark.sink.show."
 }

@@ -3,6 +3,7 @@ package org.fire.spark.streaming.core.sinks
 import java.util.{Properties, UUID}
 
 import kafka.producer.KeyedMessage
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.{StreamingContext, Time}
 import org.fire.spark.streaming.core.plugins.kafka.KafkaWriter._
@@ -14,7 +15,7 @@ import scala.reflect.ClassTag
   *
   * 输出到kafka
   */
-class KafkaSink[T: ClassTag](val ssc: StreamingContext)
+class KafkaSink[T: ClassTag](val sc: SparkContext)
   extends Sink[T] {
 
   private val producerConf = new Properties()
@@ -32,4 +33,6 @@ class KafkaSink[T: ClassTag](val ssc: StreamingContext)
 
     rdd.writeToKafka(producerConf, x => new KeyedMessage[String, Array[Byte]](outputTopic, UUID.randomUUID().toString, x.toString.getBytes()))
   }
+
+  override val paramPrefix = "spark.sink.kafka."
 }
