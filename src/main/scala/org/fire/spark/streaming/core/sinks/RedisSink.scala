@@ -15,7 +15,7 @@ class RedisSink[T <: scala.Product : ClassTag : TypeTag](@transient
                                                          val ssc : StreamingContext)
   extends Sink[T]{
 
-  private lazy val redisEndpoint = new RedisEndpoint(sparkConf)
+  private val redisEndpoint = new RedisEndpoint(sparkConf)
 
   def output(rdd : RDD[T], time : Time=Time(System.currentTimeMillis())): Unit = {
     rdd.foreachPartition(r => {
