@@ -25,6 +25,5 @@ class ShowSink[T](val sc: SparkContext) extends Sink[T] {
     println()
   }
 
-  override val sc = _
   override val paramPrefix = "spark.sink.show."
 }
