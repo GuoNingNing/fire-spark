@@ -2,6 +2,7 @@ package org.fire.spark.streaming.core.sinks
 
 import java.util.Properties
 
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode
 import org.apache.spark.streaming.{StreamingContext, Time}
@@ -18,13 +19,19 @@ import scala.reflect.runtime.universe.TypeTag
   * 序列化有问题,暂不支持 checkpoint
   *
   */
-class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override
-                                                         val ssc: StreamingContext)
+class MysqlSink[T <: scala.Product : ClassTag : TypeTag](val sc: SparkContext,
+                                                         initParams : Map[String,String] = Map.empty[String,String])
   extends Sink[T] {
 
+  private lazy val prop : Properties = {
+    val p = new Properties()
+    p.putAll(param ++ initParams)
+    p
+  }
 
-  private lazy val url = sparkConf.get("spark.sink.mysql.url")
-  private lazy val table = sparkConf.get("spark.sink.mysql.output_table_name")
+  private lazy val url =
+  private lazy val table =
+
   private lazy val saveMode =
     sparkConf.get("spark.sink.mysql.saveMode", "append")
       .toLowerCase() match {
@@ -33,11 +40,6 @@ class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override
       case "ignore" => SaveMode.Ignore
       case _ => SaveMode.Append
     }
-  val prop = new Properties()
-  prop.put("driver", sparkConf.get("spark.sink.mysql.driver", "com.mysql.jdbc.Driver"))
-  prop.put("dbtable", sparkConf.get("spark.sink.mysql.dbtable"))
-  prop.put("user", sparkConf.get("spark.sink.mysql.user"))
-  prop.put("password", sparkConf.get("spark.sink.mysql.password"))
 
 
   /**
