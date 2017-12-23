@@ -68,6 +68,6 @@ object InfluxDBSink {
   def mkInsertData(table : String,dimension : Map[String,String],values : Map[String,Any]) = {
     val ds = dimension.map(d => s"${d._1}=${d._2}").mkString(",")
     val vs = values.map(d => s"${d._1}=${d._2}").mkString(",")
-    s"$table $ds $vs"
+    s"$table,$ds $vs"
   }
 }

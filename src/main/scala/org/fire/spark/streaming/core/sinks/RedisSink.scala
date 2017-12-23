@@ -47,7 +47,9 @@ class RedisSink[T <: scala.Product : ClassTag : TypeTag](@transient override val
         val (k,v,t) = d match {
           case n : (String,Any) => (n._1,n._2.toString,3600*24*7)
           case n : (String,Any,Int) => (n._1,n._2.toString,n._3)
-          case _ => ("UNKNOWN",d.toString,60)
+          case _ =>
+            logger.warn("data type error. key is unknown")
+            ("UNKNOWN",d.toString,60)
         }
         pipe.set(k, v)
         pipe.expire(k,t)
