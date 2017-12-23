@@ -64,4 +64,10 @@ class InfluxDBSink[T : ClassTag](val sc : SparkContext,
 
 object InfluxDBSink {
   def apply(sc : SparkContext) = new InfluxDBSink[String](sc)
+
+  def mkInsertData(table : String,dimension : Map[String,String],values : Map[String,Any]) = {
+    val ds = dimension.map(d => s"${d._1}=${d._2}").mkString(",")
+    val vs = values.map(d => s"${d._1}=${d._2}").mkString(",")
+    s"$table $ds $vs"
+  }
 }
