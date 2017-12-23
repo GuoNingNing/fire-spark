@@ -37,7 +37,7 @@ class RedisSink[T <: scala.Product : ClassTag : TypeTag](val sc : SparkContext,
   private lazy val timeout = prop.getProperty("timeout",Protocol.DEFAULT_TIMEOUT.toString).toInt
 
 
-  private lazy val redisEndpoint = RedisEndpoint(host,port,auth,db,timeout)
+  private val redisEndpoint = RedisEndpoint(host,port,auth,db,timeout)
 
   def output(rdd : RDD[T], time : Time=Time(System.currentTimeMillis())): Unit = {
     rdd.foreachPartition(r => {
