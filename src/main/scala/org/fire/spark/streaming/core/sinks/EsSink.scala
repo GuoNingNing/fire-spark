@@ -14,15 +14,15 @@ import scala.language.postfixOps
   *
   * 输出ES
   */
-class EsSink[T](override val sc : SparkContext,
+class EsSink[T](@transient override val sc : SparkContext,
                 initParams: Map[String, String] = Map.empty[String, String])
   extends Sink[T] {
 
   override val paramPrefix: String = "spark.sink.es."
 
   private lazy val esParam = param ++ initParams
-  private lazy val index = esParam("index")
-  private lazy val esType = esParam("type")
+  private val index = esParam("index")
+  private val esType = esParam("type")
 
   /**
     * 输出

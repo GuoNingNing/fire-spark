@@ -17,7 +17,7 @@ import scala.reflect.ClassTag
   *
   * 暂不支持checkpoint模式
   */
-class InfluxDBSink[T : ClassTag](val sc : SparkContext,
+class InfluxDBSink[T : ClassTag](@transient override val sc : SparkContext,
                                  initParams: Map[String,String] = Map.empty[String,String])
   extends Sink[T]{
 
@@ -29,9 +29,9 @@ class InfluxDBSink[T : ClassTag](val sc : SparkContext,
     p
   }
 
-  private lazy val host = prop.getProperty("host")
-  private lazy val port = prop.getProperty("port","8086")
-  private lazy val db = prop.getProperty("db","influx")
+  private val host = prop.getProperty("host")
+  private val port = prop.getProperty("port","8086")
+  private val db = prop.getProperty("db","influx")
 
   def output(rdd : RDD[T],time : Time = Time(System.currentTimeMillis())): Unit = {
     rdd.foreach(d => {

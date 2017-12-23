@@ -16,7 +16,7 @@ import scala.reflect.ClassTag
   *
   * 输出到kafka
   */
-class KafkaSink[T: ClassTag](val sc : SparkContext,
+class KafkaSink[T: ClassTag](@transient override val sc : SparkContext,
                              initParams: Map[String,String] = Map.empty[String,String])
   extends Sink[T] {
 

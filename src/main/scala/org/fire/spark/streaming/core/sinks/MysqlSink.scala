@@ -21,7 +21,7 @@ import scala.reflect.runtime.universe.TypeTag
   * 序列化有问题,暂不支持 checkpoint
   *
   */
-class MysqlSink[T <: scala.Product : ClassTag : TypeTag](val sc: SparkContext,
+class MysqlSink[T <: scala.Product : ClassTag : TypeTag](@transient override val sc: SparkContext,
                                                          initParams : Map[String,String] = Map.empty[String,String])
   extends Sink[T] {
 
@@ -36,7 +36,7 @@ class MysqlSink[T <: scala.Product : ClassTag : TypeTag](val sc: SparkContext,
   private lazy val url = prop.getProperty("url")
   private lazy val table = prop.getProperty("table")
 
-  private lazy val saveMode =
+  private val saveMode =
     prop.getProperty("saveMode", "append").toLowerCase() match {
       case "overwrite" => SaveMode.Overwrite
       case "errorifexists" => SaveMode.ErrorIfExists

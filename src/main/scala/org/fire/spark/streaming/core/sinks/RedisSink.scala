@@ -17,7 +17,7 @@ import scala.reflect.runtime.universe.TypeTag
   *
   *
   */
-class RedisSink[T <: scala.Product : ClassTag : TypeTag](val sc : SparkContext,
+class RedisSink[T <: scala.Product : ClassTag : TypeTag](@transient override val sc : SparkContext,
                                                          initParams : Map[String,String] = Map.empty[String,String])
   extends Sink[T]{
 
