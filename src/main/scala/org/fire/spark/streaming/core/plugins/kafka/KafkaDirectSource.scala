@@ -42,7 +42,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
   // 组装 Kafka 参数
   private lazy val kafkaParams: Map[String, String] = {
     sparkConf.getAll.flatMap {
-      case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => Some(k.substring(27) -> v)
+      case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => Some(k.substring(paramPrefix.length) -> v)
       case _ => None
     } toMap
   } ++ specialKafkaParams
