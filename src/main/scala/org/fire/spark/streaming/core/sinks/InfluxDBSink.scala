@@ -1,9 +1,15 @@
 package org.fire.spark.streaming.core.sinks
 
-import org.apache.spark.rdd.RDD
-import org.apache.spark.streaming.{StreamingContext, Time}
-import scalaj.http._
 
+import java.util.Properties
+
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import org.apache.spark.streaming.Time
+
+import scala.collection.JavaConversions._
+import scala.collection.Map
+import scalaj.http._
 import scala.reflect.ClassTag
 
 /**
@@ -11,13 +17,21 @@ import scala.reflect.ClassTag
   *
   * 暂不支持checkpoint模式
   */
-class InfluxDBSink[T : ClassTag](@transient
-                                 override val ssc : StreamingContext)
+class InfluxDBSink[T : ClassTag](val sc : SparkContext,
+                                 initParams: Map[String,String] = Map.empty[String,String])
   extends Sink[T]{
 
-  private val host = sparkConf.get("spark.sink.influxDB.host")
-  private val port = sparkConf.get("spark.sink.influxDB.port","8086")
-  private val db = sparkConf.get("spark.sink.influxDB.db","influx")
+  override val paramPrefix: String = "spark.sink.influxDB."
+
+  private lazy val prop = {
+    val p = new Properties()
+    p.putAll(param ++ initParams)
+    p
+  }
+
+  private lazy val host = prop.getProperty("host")
+  private lazy val port = prop.getProperty("port","8086")
+  private lazy val db = prop.getProperty("db","influx")
 
   def output(rdd : RDD[T],time : Time = Time(System.currentTimeMillis())): Unit = {
     rdd.foreach(d => {
@@ -49,5 +63,5 @@ class InfluxDBSink[T : ClassTag](@transient
 }
 
 object InfluxDBSink {
-  def apply(ssc : StreamingContext) = new InfluxDBSink[String](ssc)
+  def apply(sc : SparkContext) = new InfluxDBSink[String](sc)
 }

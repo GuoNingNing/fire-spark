@@ -1,30 +1,43 @@
 package org.fire.spark.streaming.core.sinks
 
+import java.util.Properties
+
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.streaming.{StreamingContext, Time}
+import org.apache.spark.streaming.Time
 import org.fire.spark.streaming.core.plugins.redis.{RedisConnectionPool, RedisEndpoint}
 import redis.clients.jedis.Protocol
 
+import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
 /**
   * Created by cloud on 17/12/14.
   *
-  * 暂不支持checkpoint模式
+  *
   */
-class RedisSink[T <: scala.Product : ClassTag : TypeTag](@transient
-                                                         override
-                                                         val ssc : StreamingContext)
+class RedisSink[T <: scala.Product : ClassTag : TypeTag](val sc : SparkContext,
+                                                         initParams : Map[String,String] = Map.empty[String,String])
   extends Sink[T]{
-  private lazy val host = sparkConf.get("spark.sink.redis.host",Protocol.DEFAULT_HOST)
-  private lazy val port = sparkConf.getInt("spark.sink.redis.port",Protocol.DEFAULT_PORT)
-  private lazy val auth = sparkConf.get("spark.sink.redis.auth",null)
-  private lazy val db = sparkConf.getInt("spark.sink.redis.db",Protocol.DEFAULT_DATABASE)
-  private lazy val timeout = sparkConf.getInt("spark.sink.redis.timeout",Protocol.DEFAULT_TIMEOUT)
+
+  override val paramPrefix: String = "spark.sink.redis."
+
+  private lazy val prop = {
+    val p = new Properties()
+    p.putAll(param ++ initParams)
+    p
+  }
 
 
-  private val redisEndpoint = RedisEndpoint(host,port,auth,db,timeout)
+  private lazy val host = prop.getProperty("host",Protocol.DEFAULT_HOST)
+  private lazy val port = prop.getProperty("port",Protocol.DEFAULT_PORT.toString).toInt
+  private lazy val auth = prop.getProperty("auth",null)
+  private lazy val db = prop.getProperty("db",Protocol.DEFAULT_DATABASE.toString).toInt
+  private lazy val timeout = prop.getProperty("timeout",Protocol.DEFAULT_TIMEOUT.toString).toInt
+
+
+  private lazy val redisEndpoint = RedisEndpoint(host,port,auth,db,timeout)
 
   def output(rdd : RDD[T], time : Time=Time(System.currentTimeMillis())): Unit = {
     rdd.foreachPartition(r => {
@@ -47,25 +60,7 @@ class RedisSink[T <: scala.Product : ClassTag : TypeTag](@transient
 }
 
 object RedisSink {
-  def apply(ssc : StreamingContext) = new RedisSink[(String,String)](ssc)
+  def apply(sc : SparkContext) = new RedisSink[(String,String)](sc)
+  def apply[T <: scala.Product : ClassTag : TypeTag](rdd : RDD[T]) = new RedisSink[T](rdd.sparkContext)
 }
 
-
-/*
-class RedisSink(@transient override val ssc : StreamingContext) extends Sink[(String,String)]{
-  private lazy val redisEndpoint = new RedisEndpoint(sparkConf)
-
-  override def output(rdd : RDD[(String,String)], time : Time=Time(System.currentTimeMillis())): Unit = {
-    rdd.foreachPartition(r => {
-      val jedis = RedisConnectionPool.connect(redisEndpoint)
-      val pipe = jedis.pipelined()
-      r.foreach(d => {
-        pipe.set(d._1, d._2)
-        pipe.expire(d._1, 3600 * 24 * 7)
-      })
-      pipe.sync()
-      pipe.close()
-      jedis.close()
-    })
-  }
-}*/

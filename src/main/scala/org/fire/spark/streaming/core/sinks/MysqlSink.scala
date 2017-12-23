@@ -5,9 +5,11 @@ import java.util.Properties
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.streaming.{StreamingContext, Time}
+import org.apache.spark.streaming.Time
 import org.fire.spark.streaming.core.SQLContextSingleton
 
+import scala.collection.JavaConversions._
+import scala.collection.Map
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
@@ -29,12 +31,13 @@ class MysqlSink[T <: scala.Product : ClassTag : TypeTag](val sc: SparkContext,
     p
   }
 
-  private lazy val url =
-  private lazy val table =
+  override val paramPrefix: String = "spark.sink.mysql."
+
+  private lazy val url = prop.getProperty("url")
+  private lazy val table = prop.getProperty("table")
 
   private lazy val saveMode =
-    sparkConf.get("spark.sink.mysql.saveMode", "append")
-      .toLowerCase() match {
+    prop.getProperty("saveMode", "append").toLowerCase() match {
       case "overwrite" => SaveMode.Overwrite
       case "errorifexists" => SaveMode.ErrorIfExists
       case "ignore" => SaveMode.Ignore

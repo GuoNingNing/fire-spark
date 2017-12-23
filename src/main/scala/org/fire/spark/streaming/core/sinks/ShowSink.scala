@@ -1,13 +1,27 @@
 package org.fire.spark.streaming.core.sinks
 
+import java.util.Properties
+
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.streaming.{StreamingContext, Time}
+import org.apache.spark.streaming.Time
+import scala.collection.JavaConversions._
 
 /**
   * Created by guoning on 16/8/4.
   */
-class ShowSink[T](val ssc: StreamingContext) extends Sink[T] {
+class ShowSink[T](val sc : SparkContext,
+                  initParams : Map[String,String] = Map.empty[String,String]) extends Sink[T] {
+
+  override val paramPrefix: String = "spark.sink.show."
+
+  private lazy val prop = {
+    val p = new Properties()
+    p.putAll(param ++ initParams)
+    p
+  }
+
+  private lazy val num = prop.getProperty("num","10").toInt
 
 
   /**
@@ -15,12 +29,12 @@ class ShowSink[T](val ssc: StreamingContext) extends Sink[T] {
     *
     */
   override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
-    val firstNum = rdd.take(10 + 1)
+    val firstNum = rdd.take(num + 1)
     println("-------------------------------------------")
     println("Time: " + time)
     println("-------------------------------------------")
-    firstNum.take(10).foreach(println)
-    if (firstNum.length > 10) println("...")
+    firstNum.take(num).foreach(println)
+    if (firstNum.length > num) println("...")
     println()
   }
 }
