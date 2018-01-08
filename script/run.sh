@@ -50,12 +50,12 @@ function check_command(){
 	fi
 }
 function check_run(){
-    local flag=${1:-1}
+    local flag=$1
     check_command yarn
     local appids=($(yarn application -list | grep $appname | awk '{print $1}'))
     test ${#appids[@]} -eq 0 && test "x$flag" != "x1" && { echo "Spark app $appname already stop.">&2;exit; }
     if test ${#appids[@]} -ne 0;then
-  	if [ "x$flag" != "x1" ];then
+  	if [ "x$flag" != "x" ];then
 		for flag in ${appids[@]}
 		do
 			echo "yarn application -kill $flag">&2
@@ -111,7 +111,7 @@ function main(){
 	test ! -f "$main_jar" && { echo "$main_jar file does not exist">&2;exit; }
 	test "x$self_param" != "x#" && self_params=($(echo $self_param | awk -F ',' '{for(i=1;i<=NF;i++){print $i}}'))
 
-	check_run ${2:-"1"}
+	check_run $2
 	set_jars
 
 	echo "spark-submit --name $appname --properties-file $proper $jars --class $main $main_jar" "${self_params[@]}"
