@@ -70,7 +70,7 @@ function spark_dynamic_params(){
 	"enabled" "true"
 	_p "释放空闲的executor的时间\ndefault=60s" "executorIdleTimeout" "60s"
 	_p "有缓存的executor空闲释放时间\ndefault=infinity(默认不释放)" "cachedExecutorIdleTimeout" "infinity"
-	_p "初始化executor的个数,如果设置executor-number,谁小用谁\ndefault=minExecutors(不设置使用此项配置值)" \
+	_p "初始化executor的个数,如果设置spark.executor.instances谁小用谁\ndefault=minExecutors(不设置使用此项配置值)" \
 	"initialExecutors" "1"
 	_p "executor动态分配可分配最大数量\ndefault=infinity" "maxExecutors" "60"
 	_p "executor动态收缩的最小数量\ndefault=0" "minExecutors" "1"
