@@ -43,6 +43,7 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
   private lazy val batch = conf.getInt("spark.monitor.congestion.batch", 0)
   // 拥堵多少批次自杀
   private lazy val suicide = conf.getInt("spark.monitor.suicide.batch", 0)
+  private lazy val killCommand = conf.get("spark.monitor.suicide.command","yarn")
   private lazy val sendToDing = conf.getOption("spark.monitor.congestion.ding.to")
 
 
@@ -58,6 +59,13 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
     case None => activeBatchCounter.get() < batch && isAlerted
   }
 
+  private def getKillCommand : String = {
+    val yarnRegex="(.*yarn$)".r
+    killCommand match {
+      case yarnRegex(n) => s"$killCommand application -kill"
+      case _ => killCommand
+    }
+  }
 
   override def onBatchSubmitted(batchSubmitted: StreamingListenerBatchSubmitted): Unit = {
 
@@ -91,7 +99,7 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
 
       import scala.sys.process._
 
-      val cmd = s"yarn application -kill $appId"
+      val cmd = s"$getKillCommand $appId"
       val result = cmd !!
     }
 
