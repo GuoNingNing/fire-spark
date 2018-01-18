@@ -6,7 +6,7 @@
 ```
     $git clone https://github.com/GuoNingNing/fire-spark.git
     $cd fire-spark
-    $mvn install clean package -DskipTests
+    $mvn clean install -DskipTests
 
     构建完成之后会将jar安装到m2的对应路径下，使用时在自己的项目的pom.xml文件里添加
     
@@ -184,6 +184,9 @@ spark.sink.redis.db=0
 spark.sink.redis.timeout=30
 
 
+这只是简单的示例配置，更详细的配置参考后文中介绍的产生配置的脚本
+
+
 ```
   
 ##### 3.示例代码  
@@ -227,4 +230,56 @@ object Demon extends FireStreaming {
     停止(任意给第二个参数即可kill掉spark任务)
     $bash run.sh my.properties stop
     
+```
+
+##### 5.API 说明
+###### 5.1.框架说明
+```
+    org
+    ----apache.spark.streaming[扩展的spark streaming一些组建]
+        ----两个spark Listener 用户统计批次信息和监控批次执行
+    ----demo[示例代码]
+    ----fire.spark.streaming.core[FireSpark的核心架构代码]
+        ----channels[通道组建]
+            ----[目前只有接口没有具体实现]
+        ----format[输入输出格式化组建]
+        ----kit[工具类]
+        ----plugins[插件类]
+            ----hbase[hbase连接池相关组建]
+            ----kafka[kafka生产消费相关组建]
+                ----manager[offset管理相关]
+                ----writer[写入kafka相关]
+            ----redis[redis连接池相关组建]
+        ----sinks[输出组建]
+            ----[目前有influx,kafka,mysql,redis,show等]
+        ----sources[spark streaming数据源组建]
+            ----[目前只有接口没有具体实现]
+        ----FireStreaming[用户需继承实现的特质]
+            ----init
+                ----[初始化SparkConf的函数,用户可做一些自定义初始化动作]
+                ----[函数会在handle之前执行]
+                ----[参数是SparkConf]
+                ----[返回值是Unit]
+            ----handle
+                ----[用户可将计算逻辑实现在这个函数里]
+                ----[函数会在main函数的最后执行]
+                ----[参数是StreamingContext]
+                ----[返回值是Unit]
+        ----SQLContextSingleton[创建sparkSQL的实例对象]
+       
+    script[部署相关的脚本]
+        ----create_default_conf.sh
+            ----[产生FireSpark以及Spark自身需要的一些参数]
+            ----[包括run.sh需要的参数以及相关一些组建需要的参数]
+            ----[更详细的内容可以看脚本自身,其中包含了说明]
+        ----run.sh
+            ----[提交spark任务的脚本,会做一些基础参数检查和生成]
+            ----[需要的参数是properties类型的文件,可由上面的脚本产生]
+            ----[将run脚本加入到crontab中即可简单实现失败重启]
+            ----[脚本自带防重复启动的功能]
+```
+
+###### 5.2.Spark相关内容
+```
+    暂无,后续会继续补充
 ```
