@@ -32,6 +32,8 @@ function _p(){
 	esac
 	echo -e "$(_n $notes)\n${ph}.${k}=${v}\n"
 }
+
+#提交脚本run.sh需要的几个配置
 function user_run_params(){
 	_p "必须设置,执行class的全包名称" "run.main" " "
 	_p "必须设置,包含main class的jar包\njar必须包含在lib.path当中" "run.main.jar" " "
@@ -39,6 +41,8 @@ function user_run_params(){
 	"run.self.params" " "
 	_p "可以是绝对路径,也可以是相对此配置文件的相对路径\n相对路径会自动补全" "lib.path" "lib"
 }
+
+#spark任务提交需要的几个基础配置
 function spark_run_params(){
 	_p "执行集群设置,不用设置,一般使用YARN" "master" "yarn"
 	_p "YARN部署模式\ndefault=cluster" "submit.deployMode" "cluster"
@@ -61,6 +65,7 @@ function spark_run_params(){
 	_p "同driver节点配置作用相同,但是是针对executor的\ndefault=false" "userClassPathFirst" "true"
 }
 
+#spark 任务动态资源分配的配置
 function spark_dynamic_params(){
 	_p "++++++++++++++++++++++++Executor动态分配相关配置++++++++++++++++++++"
 	local Lprefix="spark.shuffle.service"
@@ -81,6 +86,7 @@ function spark_dynamic_params(){
 	"sustainedSchedulerBacklogTimeout" "1s"
 }
 
+#消费kafka需要的基础配置
 function fire_spark_source_kafka(){
 	create_notes "\nFire Spark Kafka Source\nbase config\n"
 	_p "spark.source.kafka.consume后面的配置是标准kafka配置"
@@ -120,6 +126,17 @@ function fire_spark_sink_influx(){
 	_p "influxDB数据库" "db" ""
 }
 
+function fire_spark_congestion_monitor(){
+	create_notes "\nFire Spark Monitor\nCongestion base config\n"
+	_p "FireSpark 自带的拥堵监控需要的几个参数"
+	local Lprefix="spark.monitor.congestion"
+	_p "钉钉机器人发送消息的api地址,需要从http开头的全路径" "send.api" ""
+	_p "堆积了几个批次之后开始告警,默认是0不告警\ndefault=0" "batch" "0"
+	_p "钉钉联系人注册钉钉使用的手机号" "ding.to" ""
+	Lprefix="spark.monitor.suicide"
+	_p "堆积多少个批次之后kill掉任务,默认是0不kill,配合任务自动重启功能可有效重启堆积任务使恢复\ndefault=0" "batch" "0"
+}
+
 function create_default(){
 	create_notes "\nspark process run.sh\nuser config\n"
 	user_run_params
@@ -133,6 +150,7 @@ function create_default(){
 }
 
 create_default
+fire_spark_congestion_monitor
 fire_spark_source_kafka
 fire_spark_sink_redis
 #fire_spark_sink_influx
