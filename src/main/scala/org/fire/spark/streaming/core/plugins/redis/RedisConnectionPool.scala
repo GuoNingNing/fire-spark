@@ -8,7 +8,7 @@ import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
 
 import scala.annotation.meta.getter
 import scala.collection.JavaConversions._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 object RedisConnectionPool {
 
@@ -113,5 +113,16 @@ object RedisConnectionPool {
     poolConfig.setNumTestsPerEvictionRun(-1)
     new JedisPool(poolConfig, re.host, re.port, re.timeout, re.auth, re.dbNum)
 
+  }
+
+  def safeClose[R](f : Jedis => R)(implicit jedis: Jedis) :  R = {
+    val result = f(jedis)
+    Try{
+      jedis.close()
+    }match {
+      case Success(o) => logger.debug("jedis.close successful.")
+      case Failure(o) => logger.error("jedis.close failed.")
+    }
+    result
   }
 }
