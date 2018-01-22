@@ -39,6 +39,7 @@ class RpcDemo(
 object RpcDemo{
   val SYSTEM_NAME = "rpc-demo"
   val ENDPOINT_NAME = "rpc-demo-ser"
+  var rpcDemoRef : RpcEndpointRef = _
 
   def main(args: Array[String]): Unit = {
     val sparkConf = new SparkConf()
@@ -47,8 +48,15 @@ object RpcDemo{
     val port = 23456 //port > 2000 && port < 65535
     val rpcEnv = RpcEnv.create(SYSTEM_NAME,host,port,sparkConf,securityManager)
 
-    rpcEnv.setupEndpoint(ENDPOINT_NAME,new RpcDemo(rpcEnv))
+    rpcDemoRef = rpcEnv.setupEndpoint(ENDPOINT_NAME,new RpcDemo(rpcEnv))
+    localMsg("init rpc demo request")
     rpcEnv.awaitTermination()
+  }
+
+  def localMsg(msg : String): Unit = {
+    if(rpcDemoRef != null){
+      rpcDemoRef.send(DemoSendReq(msg))
+    }
   }
 
   def createRpcDemoRef(sparkConf: SparkConf,host : String,port : Int) : RpcEndpointRef = {
