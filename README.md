@@ -238,6 +238,10 @@ object Demon extends FireStreaming {
     org
     ----apache.spark.streaming[扩展的spark streaming一些组建]
         ----两个spark Listener 用户统计批次信息和监控批次执行
+        ----RpcDemo里是spark RPC服务和client实现的演示代码
+            ----对应的启动代码在resources里
+            ----spark-rpcdemo client启动代码放到spark/bin下即可使用
+            ----start-rpcdemo-server.sh 放到spark/sbin下既可以使用
     ----demo[示例代码]
     ----fire.spark.streaming.core[FireSpark的核心架构代码]
         ----channels[通道组建]
@@ -281,5 +285,21 @@ object Demon extends FireStreaming {
 
 ###### 5.2.Spark相关内容
 ```
-    暂无,后续会继续补充
+    spark Rpc 服务
+    
+        想通过 spark RPC 实现服务端则须实现
+        ThreadSafeRpcEndpoint 或 RpcEndpoint
+        一般通过实现前者来实现自己的服务,如同字面意思是线程安全的
+        
+        一般需要实现4个方法
+        onStart
+            服务启动时一些内部初始化和启动其他线程服务都在这里处理
+        receive
+            接收client发过来的请求,但是不需要回复
+        receiveAndReply
+            接受client发过来的请求,并返回response
+        onStop
+            服务结束时需要做的一些清理动作在这里处理
+        具体实现详情参考RpcDemo服务的实现
+
 ```
