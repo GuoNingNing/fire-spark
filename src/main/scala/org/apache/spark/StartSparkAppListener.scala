@@ -10,8 +10,8 @@ import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd, S
   */
 class StartSparkAppListener(val sparkConf: SparkConf) extends SparkListener with Logging{
 
-  private val appName = sparkConf.get("spark.app.name")
-  private val runConf = sparkConf.get("spark.run.main.conf")
+  private val appName = sparkConf.get("spark.app.name","None")
+  private val runConf = sparkConf.get("spark.run.main.conf","None")
   private val host = sparkConf.get("spark.application.monitor.host",Utils.localHostName)
   private val port = sparkConf.getInt("spark.application.monitor.port",23456)
 
@@ -28,7 +28,7 @@ class StartSparkAppListener(val sparkConf: SparkConf) extends SparkListener with
 
   override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
     logInfo("app end time " + applicationEnd.time)
-    sendStartReq()
+    if(runConf != "None" && appName != "None") sendStartReq()
   }
 
 }
