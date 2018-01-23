@@ -5,6 +5,8 @@ import org.apache.spark.util.Utils
 import org.apache.spark.internal.Logging
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd, SparkListenerApplicationStart}
 
+import scala.util.control.NonFatal
+
 /**
   * Created by cloud on 18/1/19.
   */
@@ -16,9 +18,13 @@ class StartSparkAppListener(val sparkConf: SparkConf) extends SparkListener with
   private val port = sparkConf.getInt("spark.application.monitor.port",23456)
 
   private def sendStartReq(): Unit = {
-    val yarnAppMonitorRef = YarnAppMonitorCli.createYarnAppMonitorRef(sparkConf,host,port)
-    yarnAppMonitorRef.send(YarnAppStartRequest(appName,runConf))
-    logInfo(s"send start app request to YarnAppMonitorServer $appName $runConf")
+    try {
+      val yarnAppMonitorRef = YarnAppMonitorCli.createYarnAppMonitorRef(sparkConf, host, port)
+      yarnAppMonitorRef.send(YarnAppStartRequest(appName, runConf))
+      logInfo(s"send start app request to YarnAppMonitorServer $appName $runConf")
+    }catch {
+      case NonFatal(e) => logError("send start request failed. ",e)
+    }
   }
 
   override def onApplicationStart(applicationStart: SparkListenerApplicationStart): Unit = {
