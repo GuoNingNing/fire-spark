@@ -5,6 +5,8 @@ import org.apache.spark.streaming.{CongestionMonitorListener, JobInfoReportListe
 import org.apache.spark.{SparkConf, SparkContext}
 import org.fire.spark.streaming.core.kit.Utils
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by guoning on 2017/4/26.
   *
@@ -17,6 +19,8 @@ trait FireStreaming {
   protected final def args: Array[String] = _args
 
   private final var _args: Array[String] = _
+
+  private val startListeners = new ArrayBuffer[String]()
 
 
   // 是否开启监控
@@ -35,6 +39,8 @@ trait FireStreaming {
     */
   def init(sparkConf: SparkConf): Unit = {}
 
+  def addAllEventListeners(l : String): Unit = startListeners += l
+
   /**
     * 处理函数
     *
@@ -52,6 +58,7 @@ trait FireStreaming {
 
     val sparkConf = new SparkConf()
 
+
     // 约定传入此参数,则表示本地 Debug
     if (sparkConf.contains("spark.properties.file")) {
       sparkConf.setAll(Utils.getPropertiesFromFile(sparkConf.get("spark.properties.file")))
@@ -60,6 +67,11 @@ trait FireStreaming {
     }
 
     init(sparkConf)
+    addAllEventListeners("org.apache.spark.StartSparkAppListener")
+
+    val extraListeners = startListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners","")
+    if (extraListeners != "") sparkConf.set("spark.extraListeners",extraListeners)
+
 
     //    val sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
     // 时间间隔

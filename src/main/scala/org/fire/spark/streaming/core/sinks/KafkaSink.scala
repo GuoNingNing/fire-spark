@@ -9,7 +9,6 @@ import org.apache.spark.streaming.Time
 import org.fire.spark.streaming.core.plugins.kafka.writer.KafkaWriter._
 
 import scala.collection.JavaConversions._
-import scala.collection.Map
 import scala.reflect.ClassTag
 
 /**
@@ -17,16 +16,19 @@ import scala.reflect.ClassTag
   *
   * 输出到kafka
   */
-class KafkaSink[T: ClassTag](val sc: SparkContext, initParams: Map[String, String] = Map.empty[String, String])
+class KafkaSink[T: ClassTag](@transient override val sc : SparkContext,
+                             initParams: Map[String,String] = Map.empty[String,String])
   extends Sink[T] {
 
-  lazy val prop: Properties = {
+  override val paramPrefix: String = "spark.sink.kafka."
+
+  private lazy val prop = {
     val p = new Properties()
     p.putAll(param ++ initParams)
     p
   }
 
-  lazy val outputTopic: String = prop.getProperty("topic")
+  private val outputTopic = prop.getProperty("topic")
 
   /**
     * 以字符串的形式输出到kafka
@@ -36,6 +38,4 @@ class KafkaSink[T: ClassTag](val sc: SparkContext, initParams: Map[String, Strin
 
     rdd.writeToKafka(prop, x => new ProducerRecord[String, String](outputTopic, UUID.randomUUID().toString, x.toString))
   }
-
-  override val paramPrefix: String = "spark.sink.kafka."
 }
