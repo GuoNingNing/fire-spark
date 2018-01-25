@@ -3,14 +3,22 @@ test -f /etc/profile && . /etc/profile
 test -f $HOME/.bash_profile && . $HOME/.bash_profile
 base=$(cd $(dirname $0);pwd)
 
+function __check__(){
+	local cmd=${1:-"gawk"}
+	if ! which $cmd >/dev/null 2>&1;then
+		echo "Please install $cmd" >&2
+		exit
+	fi
+}
 function create_notes(){
 	local msg=$1
 	local col=${2:-55}
-	awk -vc=$col 'function as(ll,is,ls){for(i=1;i<ll;i++){ls=ls""is};return ls};
+	__check__
+	gawk -vc=$col 'function as(ll,is,ls){for(i=1;i<ll;i++){ls=ls""is};return ls};
 	BEGIN{print as(c,"#")}'
 	echo -e "$msg" | awk -vc=$col 'function as(ll,is,ls){for(i=1;i<ll;i++){ls=ls""is};return ls};
 	{m=$0;l=(c-length(m)-2)/2;s=as(l-1," ");s1=as(c-length("#"s""m)-1," ");print "#"s""m""s1"#"}'
-	awk -vc=$col -vr=$row 'function as(ll,is,ls){for(i=1;i<ll;i++){ls=ls""is};return ls};
+	gawk -vc=$col -vr=$row 'function as(ll,is,ls){for(i=1;i<ll;i++){ls=ls""is};return ls};
 	BEGIN{print as(c,"#")}'
 }
 function _n(){
