@@ -13,7 +13,7 @@
     <dependency>
         <groupId>org.fire.spark.streaming</groupId>
     	<artifactId>fire-spark</artifactId>
-    	<version>2.1.0_kafka-0.10</version>
+    	<version>2.2.0_kafka-0.10</version>
     </dependency>
 ```
 
