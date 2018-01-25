@@ -42,14 +42,12 @@
     </repositories>
 
     <!--项目基本依赖-->
-    <!--项目基本依赖-->
     <dependencies>
         <!--Spark 核心jar包-->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
-
         </dependency>
         <!--Spark Streaming 核心jar-->
         <dependency>
@@ -76,7 +74,7 @@
             <version>${spark.version}</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch-spark_2.10 -->
+        <!-- elasticsearch-spark_2.11 -->
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-spark_${scala.binary.version}</artifactId>
@@ -101,8 +99,7 @@
             <artifactId>lzo-hadoop</artifactId>
             <version>${lzo-hadoop.version}</version>
         </dependency>
-
-
+        <!--hbase-->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-common</artifactId>
@@ -123,22 +120,17 @@
             <artifactId>hbase-hadoop2-compat</artifactId>
             <version>${hbase.version}</version>
         </dependency>
-
-
         <!--Redis 依赖-->
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
             <version>${redis.version}</version>
         </dependency>
-
-
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobuf.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-email</artifactId>
@@ -167,7 +159,6 @@
             <artifactId>scalaj-http_2.11</artifactId>
             <version>2.3.0</version>
         </dependency>
-
 
     </dependencies>
 
@@ -221,29 +212,7 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
-
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <descriptors>
-                        <descriptor>assembly.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                        <phase>package</phase> <!-- bind to the packaging phase -->
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
-
 
 </project>

@@ -82,6 +82,9 @@ private[spark] class YarnApplicationMonitorServer(
     },1000L,1000L,TimeUnit.MILLISECONDS)
   }
 
+  /**
+    * 检查 App 的运行状态
+    */
   private def checkApplication(): Unit = {
     appIdMap.foreach { case (appId, _) =>
       try {
