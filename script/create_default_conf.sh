@@ -43,11 +43,12 @@ function _p(){
 
 #提交脚本run.sh需要的几个配置
 function user_run_params(){
-	_p "必须设置,执行class的全包名称" "run.main" " "
-	_p "必须设置,包含main class的jar包\njar必须包含在lib.path当中" "run.main.jar" " "
+	local Lprefix="spark.run"
+	_p "必须设置,执行class的全包名称" "main" " "
+	_p "必须设置,包含main class的jar包\njar文件必须包含在lib.path当中" "main.jar" " "
 	_p "提供给执行class的命令行参数,多个参数之间用逗号隔开,参数中不能包含空格等空白符\nEx:param1,param2,.." \
-	"run.self.params" " "
-	_p "可以是绝对路径,也可以是相对此配置文件的相对路径\n相对路径会自动补全" "lib.path" "lib"
+	"self.params" " "
+	_p "用户代码依赖jar包的所在目录\n可以是绝对路径,也可以是相对此配置文件的相对路径,相对路径会自动补全" "lib.path" "lib"
 }
 
 #spark任务提交需要的几个基础配置
