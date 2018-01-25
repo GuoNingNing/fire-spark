@@ -5,19 +5,24 @@ function my_include(){
     local f=${1:-"$HOME/.bash_profile"}
     test -f $f && . $f
 }
+function check_cmd(){
+	local cmd=${1:-"java"}
+	if which $cmd >/dev/null 2>&1;then
+		echo 1
+	else
+		echo 0
+	fi
+}
 function check_env(){
         local var=$1
-        local default=$2
-        local flag=$3
-        if [ "x${!var}" == "x" ];then
-                if [ "x$default" == "x" ];then
-                        echo "ENV variable $var not set." >&2
-                        exit;
-                else
-                        eval "export $var=$default"
-                fi
-        else
-                test "x$default" != "x" && test "x$flag" != "x" && eval "export $var=$default"
+        local d=$2
+        if [ "x${!var}" == "x" ] && [ "x$d" != "x" ];then
+                eval "export $var=$d"
+		else
+			test "x${!var}" == "x" && "x$d" == "x" && {
+				echo "env variable $var not set." >&2;
+				exit;
+			}
         fi
 }
 function get_param(){
@@ -104,10 +109,8 @@ function main(){
 	user_proper_file=$proper
 
 	my_include
-	check_env "JAVA_HOME" "$HOME/install/java"
-	check_env "PATH" '$JAVA_HOME/bin:$PATH' !
-	check_env "SPARK_HOME" "$HOME/install/spark-2.2.0-bin-hadoop2.7"
-	check_env "PATH" '$SPARK_HOME/bin:$PATH' !
+	test $(check_cmd "java") -eq 0 && check_env "JAVA_HOME"
+	test $(check_cmd "spark-submit") -eq 0 && check_env "SPARK_HOME"
 
 	get_param "main" "spark.run.main"
 	get_param "main_jar" "spark.run.main.jar"
