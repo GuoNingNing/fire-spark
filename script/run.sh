@@ -125,7 +125,7 @@ function main(){
 	check_run $2
 	set_jars
 
-	local main_parameter="--monitor --name $appname --properties-file $proper $jars --class $main $main_jar ${self_params[@]}"
+	local main_parameter="--name $appname --properties-file $proper $jars --class $main $main_jar ${self_params[@]}"
 	echo "spark-submit $main_parameter"
 
 	check_command spark-submit
