@@ -90,9 +90,17 @@ function check_proper(){
 			echo "$cap/lib";;
 	esac
 }
+function get_absolute_path(){
+        local  f=$1
+        test "x$f" == "x" && return
+        test ! -f "$f" && test ! -d "$f" && return
+        local dir=$(cd $(dirname $f);pwd)
+        echo "$dir/$(basename $f)"
+}
 
 function main(){
 	local proper=${1:-"$(basename $base).properties"}
+	proper=$(get_absolute_path $proper)
 	user_proper_file=$proper
 
 	my_include
@@ -114,10 +122,11 @@ function main(){
 	check_run $2
 	set_jars
 
-	echo "spark-submit --name $appname --properties-file $proper $jars --class $main $main_jar" "${self_params[@]}"
+	local main_parameter="--monitor --name $appname --properties-file $proper $jars --class $main $main_jar ${self_params[@]}"
+	echo "spark-submit $main_parameter"
 
 	check_command spark-submit
-	spark-submit --name $appname --properties-file $proper $jars --class $main $main_jar "${self_params[@]}"
+	spark-submit $main_parameter
 }
 
 test $# -eq 0 && { 

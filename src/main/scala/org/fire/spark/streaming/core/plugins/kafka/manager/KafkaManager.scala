@@ -9,7 +9,7 @@ package org.fire.spark.streaming.core.plugins.kafka.manager
 import java.lang.reflect.Constructor
 import java.{util => ju}
 
-import org.apache.spark.streaming.FireSparkLogging
+import org.apache.spark.internal.Logging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.rdd.RDD
@@ -21,7 +21,7 @@ import org.fire.spark.streaming.core.kit.Utils
 
 import scala.reflect.ClassTag
 
-private[kafka] class KafkaManager(val sparkConf: SparkConf) extends FireSparkLogging {
+private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging with Serializable{
 
 
   // 自定义
@@ -131,7 +131,7 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends FireSparkLog
 /**
   * Offset 管理
   */
-trait OffsetsManager extends FireSparkLogging {
+trait OffsetsManager extends Logging with Serializable{
 
   val sparkConf: SparkConf
 

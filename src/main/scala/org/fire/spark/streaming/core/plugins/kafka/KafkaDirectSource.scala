@@ -40,7 +40,12 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
     sparkConf.get("spark.source.kafka.consume.topics")).split(",").map(_.trim).toSet
 
   // 组装 Kafka 参数
-  private lazy val kafkaParams: Map[String, String] = param ++ specialKafkaParams
+  private lazy val kafkaParams: Map[String, String] = {
+    sparkConf.getAll.flatMap {
+      case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => Some(k.substring(paramPrefix.length) -> v)
+      case _ => None
+    } toMap
+  } ++ specialKafkaParams
 
   private lazy val groupId = kafkaParams.get("group.id")
 

@@ -21,24 +21,22 @@ import scala.reflect.runtime.universe.TypeTag
   * 序列化有问题,暂不支持 checkpoint
   *
   */
-class MysqlSink[T <: scala.Product : ClassTag : TypeTag](val sc: SparkContext, initParams: Map[String, String] = Map.empty[String, String])
+class MysqlSink[T <: scala.Product : ClassTag : TypeTag](@transient override val sc: SparkContext,
+                                                         initParams : Map[String,String] = Map.empty[String,String])
   extends Sink[T] {
 
-
-  lazy val prop: Properties = {
+  private lazy val prop : Properties = {
     val p = new Properties()
     p.putAll(param ++ initParams)
     p
   }
-  //  val prop = new Properties()
-  //  prop.put("driver", sparkConf.get("spark.sink.mysql.driver", "com.mysql.jdbc.Driver"))
-  //  prop.put("dbtable", sparkConf.get("spark.sink.mysql.dbtable"))
-  //  prop.put("user", sparkConf.get("spark.sink.mysql.user"))
-  //  prop.put("password", sparkConf.get("spark.sink.mysql.password"))
 
-  lazy val url: String = prop.getProperty("url")
-  lazy val table: String = prop.getProperty("table")
-  lazy val saveMode: SaveMode =
+  override val paramPrefix: String = "spark.sink.mysql."
+
+  private lazy val url = prop.getProperty("url")
+  private lazy val table = prop.getProperty("table")
+
+  private val saveMode =
     prop.getProperty("saveMode", "append").toLowerCase() match {
       case "overwrite" => SaveMode.Overwrite
       case "errorifexists" => SaveMode.ErrorIfExists
@@ -67,7 +65,5 @@ class MysqlSink[T <: scala.Product : ClassTag : TypeTag](val sc: SparkContext, i
 
     logger.info(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
   }
-
-  override val paramPrefix: String = "spark.sink.mysql."
 }
 

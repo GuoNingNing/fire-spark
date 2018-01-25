@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.exceptions.JedisConnectionException
-import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
+import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, Pipeline}
 
 import scala.annotation.meta.getter
 import scala.collection.JavaConversions._
@@ -115,33 +115,27 @@ object RedisConnectionPool {
 
   }
 
-
-  /**
-    * Wrap Jedis close function
-    * for example
-    * {{{
-    *    implicit val jedis = RedisConnectionPool.connect(RedisEndpoint())
-    *
-    *    val dbSize = safeClose {
-    *         jedis => jedis.dbSize()
-    *    }
-    *
-    *    println(s"dbSize $dbSize")
-    *
-    * }}}
-    *
-    * @param f
-    * @param jedis
-    * @tparam R
-    * @return
-    */
   def safeClose[R](f: Jedis => R)(implicit jedis: Jedis): R = {
     val result = f(jedis)
     Try {
       jedis.close()
     } match {
-      case Success(v) => logger.debug(s"success close jedis $jedis")
-      case Failure(e) => logger.error(s"failure close jedis ${e.getMessage}")
+      case Success(o) => logger.debug("jedis.close successful.")
+      case Failure(o) => logger.error("jedis.close failed.")
+    }
+    result
+  }
+
+  def safeClosePipe[R](f: Pipeline => R)(implicit jedis: Jedis): R = {
+    val pipe = jedis.pipelined()
+    val result = f(pipe)
+    Try {
+      pipe.sync()
+      pipe.close()
+      jedis.close()
+    } match {
+      case Success(o) => logger.debug("pipe.close successful.")
+      case Failure(o) => logger.error("pipe.close failed.")
     }
     result
   }
