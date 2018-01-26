@@ -329,5 +329,8 @@ create_project() {
 	create_pom "$2" "$3" "$4" "$5"
 	echo "procject $name create successful."
 }
-
+test $# -eq 0 && {
+	echo -e "Usage:\n\tbash $0 [procject_name]\nEx:\n\tbash $0 ~/code/test_project" >&2;
+	exit;
+}
 create_project "$@"
