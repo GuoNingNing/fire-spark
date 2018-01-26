@@ -282,6 +282,9 @@ object Demon extends FireStreaming {
             ----[需要的参数是properties类型的文件,可由上面的脚本产生]
             ----[将run脚本加入到crontab中即可简单实现失败重启]
             ----[脚本自带防重复启动的功能]
+        ----create_template_project.sh
+            ----[创建模版项目,需要一个路径,将会在这个路径下创建模版项目]
+            ----[模版项目包含一个父级pom文件以及一个子模块和模块需要的pom和assembly文件及相关目录结构]
 ```
 
 ###### 5.2.Spark相关内容
