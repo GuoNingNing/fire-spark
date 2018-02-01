@@ -45,8 +45,8 @@ object Utils {
   }
 
   def httpPost(url : String,data : String,headers : Map[String,String] = Map.empty[String,String]): (Int,String) ={
-    val req = Http(url).postData(data)
-    headers.foreach {case (k,v) => req.header(k,v)}
+    var req = Http(url).postData(data)
+    headers.foreach {case (k,v) => req=req.header(k,v)}
     val res = req.asString
     (res.code,res.body)
   }
