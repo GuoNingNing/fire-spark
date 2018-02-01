@@ -8,6 +8,8 @@ import org.apache.spark.SparkException
 import scala.collection.JavaConverters._
 import scala.collection.Map
 
+import scalaj.http._
+
 /**
   * Created by guoning on 2017/5/19.
   */
@@ -40,6 +42,13 @@ object Utils {
 
   def main(args: Array[String]): Unit = {
 
+  }
+
+  def httpPost(url : String,data : String,headers : Map[String,String] = Map.empty[String,String]): (Int,String) ={
+    val req = Http(url).postData(data)
+    headers.foreach {case (k,v) => req.header(k,v)}
+    val res = req.asString
+    (res.code,res.body)
   }
 
 }
