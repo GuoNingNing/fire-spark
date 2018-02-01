@@ -51,4 +51,10 @@ object Utils {
     (res.code,res.body)
   }
 
+  def httpGet(url : String,param : Seq[(String,String)]) : (Int,String) = {
+    val req = Http(url).params(param)
+    val res = req.asString
+    (res.code,res.body)
+  }
+
 }
