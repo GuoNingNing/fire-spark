@@ -8,7 +8,6 @@
 package object notice {
 
   import org.fire.spark.streaming.core.kit.Utils
-  //import scala.sys.process._
 
   case class Ding(api: String, to: String, message: String)
 
@@ -34,11 +33,6 @@ package object notice {
 
       val headers = Map("content-type" -> "application/json")
       val (code,res) = Utils.httpPost(ding.api,body,headers)
-
-      /*
-      val cmd = Seq("curl", "-s", "-L", "-X", "POST", "-H", "Content-Type: application/json", "-d " + body, ding.api)
-      val result = cmd !!
-      */
 
       println(s"result code : $code , body : $res")
     }
