@@ -57,6 +57,8 @@ function spark_run_params(){
 	_p "YARN部署模式\ndefault=cluster" "submit.deployMode" "cluster"
 	_p "spark-streaming每个批次间隔时间\ndefault=300" "batch.duration" "300"
 	_p "spark on yarn的任务提交队列\ndefault=defalut" "yarn.queue" "default"
+	_p "spark 任务名称配置,建议保持任务名称全局唯一\n这样可以在设计任务失败的时候根据名称做一些唯一处理\n不设置使用类全名.App" \
+	"app.name" ""
 	_p "spark网络序列化方式,默认是JavaSerializer,可针对所有类型但速度较慢\n这里使用推荐的Kryo方式\nkafka-0.10必须使用此方式" \
 	"serializer" "org.apache.spark.serializer.KryoSerializer"
 
