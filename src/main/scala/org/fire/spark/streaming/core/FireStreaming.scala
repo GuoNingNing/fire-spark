@@ -67,7 +67,6 @@ trait FireStreaming {
     }
 
     init(sparkConf)
-    addAllEventListeners("org.apache.spark.StartSparkAppListener")
 
     val extraListeners = startListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners","")
     if (extraListeners != "") sparkConf.set("spark.extraListeners",extraListeners)
