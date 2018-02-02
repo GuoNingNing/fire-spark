@@ -46,7 +46,6 @@ class JobInfoReportListener(ssc: StreamingContext) extends StreamingListener wit
     */
   override def onBatchCompleted(batchStarted: StreamingListenerBatchCompleted): Unit = {
 
-
     val batchInfo = batchStarted.batchInfo
 
     val offsetRanges = batchInfo.streamIdToInputInfo.values.flatMap(_.metadata("offsets").asInstanceOf[List[OffsetRange]])
