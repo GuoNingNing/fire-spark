@@ -238,12 +238,12 @@ object Demon extends FireStreaming {
 ```
     org
     ----apache.spark
-        ----streaming[扩展的spark streaming一些组建]
+        ----streaming[自定义的spark streaming一些Listenter]
             ----CongestionMonitorListener 拥堵监控
                 ----[会对streaming任务是否产生拥堵进行告警和停止任务]
             ----JobInfoReportListener 任务信息记录
                 ----[会对streaming对任务详细信息进行记录输出到对应的kafka中]
-            ----自定义及使用方法见后文的 5.2 内容
+            ----自定义及使用方法见后文的 5.2 Streaming Listener内容
         ----RpcDemo里是spark RPC服务和client实现的演示代码
             ----对应的启动代码在resources里
             ----spark-rpcdemo client启动代码放到spark/bin下即可使用
