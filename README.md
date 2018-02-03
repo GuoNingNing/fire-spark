@@ -1,7 +1,7 @@
 # Fire-Spark
     让Spark开发变得更简单
 ### BUILD和使用方法
-##### 1.构建方法
+#### 1.构建方法
 
 ```
     $git clone https://github.com/GuoNingNing/fire-spark.git
@@ -18,7 +18,7 @@
     </dependency>
 ```
 
-##### 2.配置说明
+#### 2.配置说明
 
 ```
 
@@ -190,7 +190,7 @@ spark.sink.redis.timeout=30
 
 ```
   
-##### 3.示例代码  
+#### 3.示例代码  
   
 ```scala    
 package z.cloud.t3
@@ -213,7 +213,7 @@ object Demon extends FireStreaming {
 
 ```
 
-##### 4.运行示例代码
+#### 4.运行示例代码
 
 ```
     使用script中的create_default_conf.sh创建标准配置文件
@@ -233,8 +233,8 @@ object Demon extends FireStreaming {
     
 ```
 
-##### 5.API 说明
-###### 5.1.框架说明
+#### 5.API 说明
+##### 5.1.框架说明
 ```
     org
     ----apache.spark
@@ -243,7 +243,7 @@ object Demon extends FireStreaming {
                 ----[会对streaming任务是否产生拥堵进行告警和停止任务]
             ----JobInfoReportListener 任务信息记录
                 ----[会对streaming对任务详细信息进行记录输出到对应的kafka中]
-            ---- [自定义Listener及使用方法](http://www.cnblogs.com/cloud-zhao/p/8392947.html)
+            ----自定义及使用方法见后文的 5.2 内容
         ----RpcDemo里是spark RPC服务和client实现的演示代码
             ----对应的启动代码在resources里
             ----spark-rpcdemo client启动代码放到spark/bin下即可使用
@@ -292,7 +292,8 @@ object Demon extends FireStreaming {
             ----[模版项目包含一个父级pom文件以及一个子模块和模块需要的pom和assembly文件及相关目录结构]
 ```
 
-###### 5.2.Spark相关内容
+##### 5.2.Spark相关内容
+###### 5.2.1 Spark RPC 服务说明
 ```
     spark Rpc 服务
     
@@ -312,3 +313,7 @@ object Demon extends FireStreaming {
         具体实现详情参考RpcDemo服务的实现
 
 ```
+
+###### 5.2.2 Spark Listener 相关文档说明
+Spark Streaming Listener  
+    [自定义Listener及使用方法](http://www.cnblogs.com/cloud-zhao/p/8392947.html)
