@@ -293,7 +293,6 @@ object Demon extends FireStreaming {
 ```
 
 ##### 5.2.Spark相关内容
-###### 5.2.1 Spark RPC 服务说明
 ```
     spark Rpc 服务
     
@@ -314,6 +313,3 @@ object Demon extends FireStreaming {
 
 ```
 
-###### 5.2.2 Spark Listener 相关文档说明
-Spark Streaming Listener  
-    [自定义Listener及使用方法](http://www.cnblogs.com/cloud-zhao/p/8392947.html)
