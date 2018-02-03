@@ -79,10 +79,6 @@ trait FireStreaming {
     val sc = new SparkContext(sparkConf)
     val ssc = new StreamingContext(sc, Seconds(slide))
 
-    ssc.addStreamingListener(new CongestionMonitorListener(ssc))
-
-    if (monitor) ssc.addStreamingListener(new JobInfoReportListener(ssc))
-
     handle(ssc)
     ssc
   }
