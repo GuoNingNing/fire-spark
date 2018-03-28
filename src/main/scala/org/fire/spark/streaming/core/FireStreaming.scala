@@ -3,6 +3,9 @@ package org.fire.spark.streaming.core
 import org.apache.spark.streaming.{CongestionMonitorListener, JobInfoReportListener, Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.fire.spark.streaming.core.kit.Utils
+import org.slf4j.LoggerFactory
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by guoning on 2017/4/26.
@@ -12,10 +15,13 @@ import org.fire.spark.streaming.core.kit.Utils
   */
 trait FireStreaming {
 
+  lazy val logger = LoggerFactory.getLogger(getClass)
 
   protected final def args: Array[String] = _args
 
   private final var _args: Array[String] = _
+
+  private val startListeners = new ArrayBuffer[String]()
 
 
   // 是否开启监控
@@ -34,6 +40,8 @@ trait FireStreaming {
     */
   def init(sparkConf: SparkConf): Unit = {}
 
+  def addAllEventListeners(l: String): Unit = startListeners += l
+
   /**
     * 处理函数
     *
@@ -51,24 +59,24 @@ trait FireStreaming {
 
     val sparkConf = new SparkConf()
 
+
     // 约定传入此参数,则表示本地 Debug
     if (sparkConf.contains("spark.properties.file")) {
+      sparkConf.setAll(Utils.getPropertiesFromFile(sparkConf.get("spark.properties.file")))
       sparkConf.setAppName("LocalDebug").setMaster("local[*]")
       sparkConf.set("spark.streaming.kafka.maxRatePerPartition", "10")
-      sparkConf.setAll(Utils.getPropertiesFromFile(sparkConf.get("spark.properties.file")))
     }
 
     init(sparkConf)
+//    addAllEventListeners("org.apache.spark.StartSparkAppListener")
+
+    val extraListeners = startListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
+    if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
 
     // 时间间隔
     val slide = sparkConf.get("spark.batch.duration").toInt
     val sc = new SparkContext(sparkConf)
     val ssc = new StreamingContext(sc, Seconds(slide))
-
-    ssc.addStreamingListener(new CongestionMonitorListener(ssc))
-
-    if (monitor) ssc.addStreamingListener(new JobInfoReportListener(ssc))
-
     handle(ssc)
     ssc
   }
@@ -81,7 +89,6 @@ trait FireStreaming {
         |"Usage: FireStreaming [options]
         |
         | Options are:
-        |   --monitor <是否开启监控  true|false>
         |   --checkpointPath <checkpoint 目录设置>
         |   --createOnError <从 checkpoint 恢复失败,是否重新创建 true|false>
         |""".stripMargin)
@@ -97,9 +104,6 @@ trait FireStreaming {
 
     while (argv.nonEmpty) {
       argv match {
-        case ("--monitor") :: value :: tail =>
-          monitor = value.toBoolean
-          argv = tail
         case ("--checkpointPath") :: value :: tail =>
           checkpointPath = value
           argv = tail

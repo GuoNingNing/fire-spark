@@ -51,9 +51,10 @@ else
 
 
 
-sudo -u hdfs spark2-submit \
+sudo -u hdfs spark-submit \
     --queue spark \
     $jars \
     --properties-file ${PROP} \
     --class ${MAIN} ${MAIN_JAR} "${MAIN_PARAMS}" "${USER_PARAMS}"
 
+fi

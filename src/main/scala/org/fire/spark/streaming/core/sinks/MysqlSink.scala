@@ -2,11 +2,14 @@ package org.fire.spark.streaming.core.sinks
 
 import java.util.Properties
 
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SaveMode
-import org.apache.spark.streaming.{StreamingContext, Time}
+import org.apache.spark.streaming.Time
 import org.fire.spark.streaming.core.SQLContextSingleton
 
+import scala.collection.JavaConversions._
+import scala.collection.Map
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
@@ -18,26 +21,28 @@ import scala.reflect.runtime.universe.TypeTag
   * 序列化有问题,暂不支持 checkpoint
   *
   */
-class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override
-                                                         val ssc: StreamingContext)
+class MysqlSink[T <: scala.Product : ClassTag : TypeTag](@transient override val sc: SparkContext,
+                                                         initParams : Map[String,String] = Map.empty[String,String])
   extends Sink[T] {
 
+  private lazy val prop : Properties = {
+    val p = new Properties()
+    p.putAll(param ++ initParams)
+    p
+  }
 
-  private lazy val url = sparkConf.get("spark.sink.mysql.url")
-  private lazy val table = sparkConf.get("spark.sink.mysql.output_table_name")
-  private lazy val saveMode =
-    sparkConf.get("spark.sink.mysql.saveMode", "append")
-      .toLowerCase() match {
+  override val paramPrefix: String = "spark.sink.mysql."
+
+  private lazy val url = prop.getProperty("url")
+  private lazy val table = prop.getProperty("table")
+
+  private val saveMode =
+    prop.getProperty("saveMode", "append").toLowerCase() match {
       case "overwrite" => SaveMode.Overwrite
       case "errorifexists" => SaveMode.ErrorIfExists
       case "ignore" => SaveMode.Ignore
       case _ => SaveMode.Append
     }
-  val prop = new Properties()
-  prop.put("driver", sparkConf.get("spark.sink.mysql.driver", "com.mysql.jdbc.Driver"))
-  prop.put("dbtable", sparkConf.get("spark.sink.mysql.dbtable"))
-  prop.put("user", sparkConf.get("spark.sink.mysql.user"))
-  prop.put("password", sparkConf.get("spark.sink.mysql.password"))
 
 
   /**
@@ -58,7 +63,7 @@ class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override
     val count = df.count()
     val end = System.currentTimeMillis()
 
-    logInfo(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
+    logger.info(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
   }
 }
 

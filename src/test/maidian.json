@@ -1,0 +1,41 @@
+{
+  user_info: {
+    user_id: xxx, //用户id
+    device_id: xxx, //设备id (客户端解决重复问题)
+    gender: xxx,//性别
+    cc: xx,//客户端渠道
+    cv: xx, //客户端版本
+    ov: xxx, //手机系统版本
+    net: xxx, //网络类型 （WIFI,4G,3G,2G,GPRS,Unknown）
+    aid: xxx, //安卓id
+    imei: xxx, //手机串号
+    imsi: xxx, //手机标识卡
+    tuid: xxx, //淘宝用户id
+    idfa:xxx,
+    lng:xx, //经度
+    lat:xx, //维度
+  },
+  event_info: {
+    e1: xxx,
+    e2: xxx,
+    e3: xxx,
+    e4: xxx,
+    client_time: xxx,
+    event_name: xxx, //事件名称， 用户于落地区分
+    event_type:xxx, (click,pv,views)
+  },
+  client_log_info: {
+    client_id,xxx, //客户端id
+    session_id:xxx, //会话id
+    trace_id:xx,
+    abgroup: xxx, 用于ab测试
+  },
+  server_log_info: {
+    client_ip:xxx, //客户端ip
+    server_name: xxx, //写日志的服务端hostname
+    server_time: xxx, //服务端写日志时间
+  },
+  extend: {
+    //事件扩展
+  }
+}

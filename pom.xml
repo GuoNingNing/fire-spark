@@ -10,20 +10,21 @@
 
     <!-- 定义统一版本号-->
     <properties>
-        <spark.version>1.6.0-cdh5.12.1</spark.version>
-        <hadoop.version>2.6.0-cdh5.12.1</hadoop.version>
+        <spark.version>1.6.0-cdh5.14.0</spark.version>
+        <hadoop.version>2.6.0-cdh5.14.0</hadoop.version>
+        <hbase.version>1.2.0-cdh5.14.0</hbase.version>
 
         <scala.version>2.10.5</scala.version>
         <lzo-hadoop.version>1.0.5</lzo-hadoop.version>
         <scala.binary.version>2.10</scala.binary.version>
         <zkclient.version>0.8</zkclient.version>
         <redis.version>2.8.2</redis.version>
-        <es.version>2.4.0</es.version>
-        <protobuf.version>3.3.0</protobuf.version>
+        <es.version>6.2.2</es.version>
+        <protobuf.version>2.6.1</protobuf.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <project.build.jdk>1.7</project.build.jdk>
+        <project.build.jdk>1.8</project.build.jdk>
 
         <PermGen>64m</PermGen>
         <MaxPermGen>512m</MaxPermGen>
@@ -71,10 +72,30 @@
             <artifactId>spark-hive_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
-        <!-- ES -->
+
+        <!--Spark Hbase-->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-spark</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>3.4.6</version>
+        </dependency>
+
+        <!--Spark ES -->
         <dependency>
             <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch-spark_${scala.binary.version}</artifactId>
+            <artifactId>elasticsearch-spark-13_2.10</artifactId>
             <version>${es.version}</version>
         </dependency>
         <!--zkClient-->
