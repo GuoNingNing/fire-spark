@@ -1,11 +1,17 @@
 package org.fire.spark.streaming.core
 
+import java.io.File
+import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.apache.spark.streaming.{CongestionMonitorListener, JobInfoReportListener, Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.fire.spark.streaming.core.kit.Utils
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Try
+import sys.process._
 
 /**
   * Created by guoning on 2017/4/26.
@@ -40,6 +46,11 @@ trait FireStreaming {
     */
   def init(sparkConf: SparkConf): Unit = {}
 
+  /**
+    * spark 启动后 调用
+    */
+  def afterStarted(ssc: StreamingContext): Unit = {}
+
   def addAllEventListeners(l: String): Unit = startListeners += l
 
   /**
@@ -48,6 +59,39 @@ trait FireStreaming {
     * @param ssc
     */
   def handle(ssc: StreamingContext): Unit
+
+  private var heartbeatExecutor: ScheduledThreadPoolExecutor = null
+
+  /**
+    * 心跳检测程序
+    *
+    * @param ssc
+    */
+  def heartbeat(ssc: StreamingContext): Unit = {
+    val sparkConf = ssc.sparkContext.getConf
+
+    sparkConf.get("spark.monitor.heartbeat.api", "none") match {
+      case "none" =>
+      case heartbeat =>
+
+        val initialDelay = sparkConf.get("spark.monitor.heartbeat.initialDelay", "60000").toLong
+        val period = sparkConf.get("spark.monitor.heartbeat.period", "10000").toLong
+
+        val threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("spark-monitor-heartbeat-thread").build()
+        val heartbeatExecutor = new ScheduledThreadPoolExecutor(1, threadFactory)
+        heartbeatExecutor.setRemoveOnCancelPolicy(true)
+        heartbeatExecutor.scheduleAtFixedRate(new Runnable {
+          override def run(): Unit = {
+
+            Try {
+              logger.info(s"send heartbeat to $heartbeat/${sparkConf.getAppId}/${period * 1.5} ")
+              s"curl $heartbeat/${sparkConf.getAppId}/${period * 3} " #>> new File("/dev/null") !!
+            }
+
+          }
+        }, initialDelay, period, TimeUnit.MILLISECONDS)
+    }
+  }
 
 
   /**
@@ -66,9 +110,13 @@ trait FireStreaming {
       sparkConf.setAppName("LocalDebug").setMaster("local[*]")
       sparkConf.set("spark.streaming.kafka.maxRatePerPartition", "10")
     }
+    // 如果有心跳监控，则提交成功后退出终端
+    if(sparkConf.contains("spark.monitor.heartbeat.api")){
+      sparkConf.set("spark.yarn.submit.waitAppCompletion","false")
+    }
 
     init(sparkConf)
-//    addAllEventListeners("org.apache.spark.StartSparkAppListener")
+    //    addAllEventListeners("org.apache.spark.StartSparkAppListener")
 
     val extraListeners = startListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
     if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
@@ -127,6 +175,13 @@ trait FireStreaming {
     }
 
     context.start()
+    afterStarted(context)
+    heartbeat(context)
     context.awaitTermination()
+
+    if (heartbeatExecutor != null) {
+      logger.info("shutdown heartbeatExecutor ...")
+      heartbeatExecutor.shutdown()
+    }
   }
 }

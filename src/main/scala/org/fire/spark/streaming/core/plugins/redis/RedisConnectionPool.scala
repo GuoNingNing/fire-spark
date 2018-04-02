@@ -3,11 +3,16 @@ package org.fire.spark.streaming.core.plugins.redis
 import java.util.concurrent.ConcurrentHashMap
 
 import org.apache.spark.Logging
+import org.slf4j.LoggerFactory
 import redis.clients.jedis.exceptions.JedisConnectionException
 import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig}
-import scala.collection.JavaConversions._
 
-object RedisConnectionPool extends Logging {
+import scala.collection.JavaConversions._
+import scala.util.{Failure, Success, Try}
+
+object RedisConnectionPool {
+  private lazy val logger = LoggerFactory.getLogger(getClass)
+
   @transient private lazy val pools: ConcurrentHashMap[RedisEndpoint, JedisPool] =
     new ConcurrentHashMap[RedisEndpoint, JedisPool]()
 
@@ -23,7 +28,7 @@ object RedisConnectionPool extends Logging {
     try {
       connect(res(rnd))
     } catch {
-      case e: Exception => logWarning(e.getMessage)
+      case e: Exception => logger.error(e.getMessage)
         connect(res.drop(rnd))
     }
   }
@@ -53,6 +58,17 @@ object RedisConnectionPool extends Logging {
     conn
   }
 
+  def safeClose[R](f: Jedis => R)(implicit jedis: Jedis): R = {
+    val result = f(jedis)
+    Try {
+      jedis.close()
+    } match {
+      case Success(v) => logger.debug(s"success close jedis $jedis")
+      case Failure(e) => logger.error(s"failure close jedis ${e.getMessage}")
+    }
+    result
+  }
+
   /**
     * 创建一个连接池
     *
@@ -79,5 +95,11 @@ object RedisConnectionPool extends Logging {
     poolConfig.setNumTestsPerEvictionRun(-1)
     new JedisPool(poolConfig, re.host, re.port, re.timeout, re.auth, re.dbNum)
 
+  }
+
+  def main(args: Array[String]): Unit = {
+//    safeClose { jedis =>
+//
+//    }
   }
 }
