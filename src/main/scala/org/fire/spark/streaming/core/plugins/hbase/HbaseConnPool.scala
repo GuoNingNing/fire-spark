@@ -18,7 +18,7 @@ object HbaseConnPool {
 
 
   @transient
-  private lazy val pools: ConcurrentHashMap[Configuration, Connection] = new ConcurrentHashMap[Configuration, Connection]()
+  private lazy val pools: ConcurrentHashMap[String, Connection] = new ConcurrentHashMap[String, Connection]()
 
 
   def connect(params: Map[String, String]): Connection = {
@@ -33,15 +33,19 @@ object HbaseConnPool {
 
     val conf = HBaseConfiguration.create
 
-    for ((key, value) <- sparkConf.getAllWithPrefix("spark.hbase")) {
-      conf.set(key.substring(6), value)
+    for ((key, value) <- sparkConf.getAllWithPrefix("spark.hbase.")) {
+      conf.set(key, value)
     }
 
     connect(conf)
   }
 
   def connect(conf: Configuration): Connection = {
-    pools.getOrElseUpdate(conf, ConnectionFactory.createConnection(conf))
+    val zookeeper = conf.get("hbase.zookeeper.quorum")
+    pools.getOrElseUpdate(zookeeper, ConnectionFactory.createConnection(conf))
   }
+
+  def close(): Unit = pools.foreach { case (k, v) => v.close() }
+
 
 }
