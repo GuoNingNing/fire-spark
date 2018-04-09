@@ -140,4 +140,6 @@ object RedisConnectionPool {
     result
   }
 
+  def close(): Unit = pools.foreach { case (k, v) => v.close() }
+
 }

@@ -29,6 +29,10 @@ object HbaseConnPool {
     connect(conf)
   }
 
+  /*
+  * spark.hbase.hbase.zookeeper.quorum=ip1,ip2,ip3
+  * spark.hbase.hbase.master=ip:port
+  * */
   def connect(sparkConf: SparkConf): Connection = {
 
     val conf = HBaseConfiguration.create
@@ -46,6 +50,5 @@ object HbaseConnPool {
   }
 
   def close(): Unit = pools.foreach { case (k, v) => v.close() }
-
 
 }

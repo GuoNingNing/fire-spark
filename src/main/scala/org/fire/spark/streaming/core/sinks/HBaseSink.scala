@@ -52,4 +52,11 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
     }
   }
 
+  def close(): Unit = HbaseConnPool.close()
+
+}
+
+object HBaseSink {
+  def apply(sc: SparkContext) = new HBaseSink[Put](sc)
+  def apply[T <: Mutation : ClassTag](rdd: RDD[T]) = new HBaseSink[T](rdd.sparkContext)
 }
