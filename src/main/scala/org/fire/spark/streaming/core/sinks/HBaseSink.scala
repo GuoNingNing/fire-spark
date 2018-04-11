@@ -11,6 +11,7 @@ import org.fire.spark.streaming.core.plugins.hbase.HbaseConnPool
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ListBuffer
 
 /**
   * Created by cloud on 18/4/3.
@@ -43,11 +44,23 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
   override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
     rdd.foreachPartition { r =>
       val table = getTable(tableName)
-      r.foreach {
-        case put: Put => table.put(put)
-        case del: Delete => table.delete(del)
+      val mutationList = r.toList
+      mutationList match {
+        case put: List[Put] => table.put(put.asInstanceOf[List[Put]])
+        case del: List[Delete] => table.delete(del.asInstanceOf[List[Delete]])
         case _ =>
       }
+/*
+      val putList = ListBuffer[Put]()
+      val delList = ListBuffer[Delete]()
+      r.foreach {
+        case put: Put => putList += put
+        case del: Delete => delList += del
+        case _ =>
+      }
+      if(putList.nonEmpty) table.put(putList.toList)
+      if(delList.nonEmpty) table.delete(delList.toList)
+      */
       table.close()
     }
   }
