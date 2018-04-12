@@ -11,7 +11,6 @@ import org.fire.spark.streaming.core.plugins.hbase.HbaseConnPool
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConversions._
-import scala.collection.mutable.ListBuffer
 
 /**
   * Created by cloud on 18/4/3.
@@ -23,7 +22,7 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
 
   private lazy val prop = {
     val p = new Properties()
-    p.putAll(param ++ initParams)
+    p.putAll(param.map { case (k,v) => s"hbase.$k"->v } ++ initParams)
     p
   }
 
@@ -31,7 +30,7 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
 
   private def getTable(table: String) : Table = {
     val conf = HBaseConfiguration.create
-    prop.foreach {case (k,v) => conf.set(s"hbase.$k",v)}
+    prop.foreach {case (k,v) => conf.set(k,v)}
     val connection = HbaseConnPool.connect(conf)
     connection.getTable(TableName.valueOf(table))
   }
@@ -50,17 +49,6 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
         case del: List[Delete] => table.delete(del.asInstanceOf[List[Delete]])
         case _ =>
       }
-/*
-      val putList = ListBuffer[Put]()
-      val delList = ListBuffer[Delete]()
-      r.foreach {
-        case put: Put => putList += put
-        case del: Delete => delList += del
-        case _ =>
-      }
-      if(putList.nonEmpty) table.put(putList.toList)
-      if(delList.nonEmpty) table.delete(delList.toList)
-      */
       table.close()
     }
   }
