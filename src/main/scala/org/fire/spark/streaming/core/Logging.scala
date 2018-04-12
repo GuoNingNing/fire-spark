@@ -1,8 +1,7 @@
-package org.fire.spark.streaming
+package org.fire.spark.streaming.core
 
 import org.slf4j.impl.StaticLoggerBinder
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 /**
   * Created by cloud on 18/4/12.
   * 同spark.Logging 使用方式一致
