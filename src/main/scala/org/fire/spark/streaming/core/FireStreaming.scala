@@ -27,7 +27,7 @@ trait FireStreaming {
 
   private final var _args: Array[String] = _
 
-  private val startListeners = new ArrayBuffer[String]()
+  private val sparkListeners = new ArrayBuffer[String]()
 
 
   // 是否开启监控
@@ -51,7 +51,19 @@ trait FireStreaming {
     */
   def afterStarted(ssc: StreamingContext): Unit = {}
 
-  def addAllEventListeners(l: String): Unit = startListeners += l
+  /**
+    * spark 停止后 程序停止前 调用
+    */
+  def beforeStop(ssc: StreamingContext): Unit = {}
+
+  /**
+    * 添加一个sparkListeners
+    * 如使用此函数添加,则必须在 init 中调用此函数
+    * @param listener
+    * @deprecated 不建议使用此方法在代码中添加,如需添加请直接在配置文件中配置
+    */
+  @deprecated
+  def addSparkListeners(listener: String): Unit = sparkListeners += listener
 
   /**
     * 处理函数
@@ -78,7 +90,7 @@ trait FireStreaming {
         val period = sparkConf.get("spark.monitor.heartbeat.period", "10000").toLong
 
         val threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("spark-monitor-heartbeat-thread").build()
-        val heartbeatExecutor = new ScheduledThreadPoolExecutor(1, threadFactory)
+        heartbeatExecutor = new ScheduledThreadPoolExecutor(1, threadFactory)
         heartbeatExecutor.setRemoveOnCancelPolicy(true)
         heartbeatExecutor.scheduleAtFixedRate(new Runnable {
           override def run(): Unit = {
@@ -118,7 +130,7 @@ trait FireStreaming {
     init(sparkConf)
     //    addAllEventListeners("org.apache.spark.StartSparkAppListener")
 
-    val extraListeners = startListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
+    val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
     if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
 
     // 时间间隔
@@ -183,5 +195,6 @@ trait FireStreaming {
       logger.info("shutdown heartbeatExecutor ...")
       heartbeatExecutor.shutdown()
     }
+    beforeStop(context)
   }
 }

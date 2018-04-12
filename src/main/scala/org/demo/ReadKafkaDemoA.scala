@@ -1,11 +1,21 @@
 package org.demo
 
 import kafka.serializer.StringDecoder
+import org.apache.spark.SparkConf
 import org.apache.spark.streaming.StreamingContext
 import org.fire.spark.streaming.core.FireStreaming
 import org.fire.spark.streaming.core.sources.KafkaDirectSource
 
 object ReadKafkaDemoA extends FireStreaming {
+
+  /**
+    * 初始化函数
+    */
+  override def init(sparkConf: SparkConf): Unit = {
+    sparkConf.set("kafka.auto.offset","false")
+    addSparkListeners("org.apache.spark.TestListener")
+  }
+
   /**
     * 处理函数
     *
