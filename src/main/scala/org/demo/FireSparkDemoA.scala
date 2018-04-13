@@ -23,7 +23,7 @@ object FireSparkDemoA extends FireSpark with Logging {
     */
   override def handle(sc: SparkContext): Unit = {
     val rdd = sc.textFile("xxxx")
-    rdd.map(s => for(i <- s.split(" ")) yield i).map(_ -> 1).reduceByKey(_ + _).foreach(println)
+    rdd.flatMap(_.split(" ")).map(_ -> 1).reduceByKey(_ + _).foreach(println)
   }
 
 }
