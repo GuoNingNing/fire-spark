@@ -12,17 +12,12 @@ import org.slf4j.LoggerFactory
   */
 trait Logging {
 
-  // Make the log field transient so that objects with Logging can
-  // be serialized and used on another machine
-  @transient private var log_ : Logger = null
+  @transient private var log_ : Logger = _
 
-  // Method to get the logger name for this object
   protected def logName = {
-    // Ignore trailing $'s in the class names for Scala objects
     this.getClass.getName.stripSuffix("$")
   }
 
-  // Method to get or create the logger for this object
   protected def log: Logger = {
     if (log_ == null) {
       initializeLogIfNecessary(false)
@@ -31,7 +26,6 @@ trait Logging {
     log_
   }
 
-  // Log methods that take only a String
   protected def logInfo(msg: => String) {
     if (log.isInfoEnabled) log.info(msg)
   }
@@ -52,7 +46,6 @@ trait Logging {
     if (log.isErrorEnabled) log.error(msg)
   }
 
-  // Log methods that take Throwables (Exceptions/Errors) too
   protected def logInfo(msg: => String, throwable: Throwable) {
     if (log.isInfoEnabled) log.info(msg, throwable)
   }
@@ -84,13 +77,9 @@ trait Logging {
   }
 
   private def initializeLogging(isInterpreter: Boolean): Unit = {
-    // Don't use a logger in here, as this is itself occurring during initialization of a logger
-    // If Log4j 1.2 is being used, but is not initialized, load a default properties file
-    val binderClass = StaticLoggerBinder.getSingleton.getLoggerFactoryClassStr
+    StaticLoggerBinder.getSingleton.getLoggerFactoryClassStr
     Logging.initialized = true
 
-    // Force a call into slf4j to initialize it. Avoids this happening from multiple threads
-    // and triggering this: http://mailman.qos.ch/pipermail/slf4j-dev/2010-April/002956.html
     log
   }
 }

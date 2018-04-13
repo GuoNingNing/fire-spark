@@ -50,7 +50,7 @@ trait FireStreaming {
 
   /**
     * 添加sparkListener
-    * 如使用此函数添加,则必须在 init 函数中调用此函数
+    * 如使用此函数添加,则必须在 handle 函数之前调用此函数
     * @param listener
     * @deprecated 建议直接在配置文件中添加
     */
