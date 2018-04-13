@@ -35,7 +35,7 @@ trait FireSpark {
 
   /**
     * 添加一个sparkListeners
-    * 如使用此函数添加,则必须在 init 中调用此函数
+    * 如使用此函数添加,则必须在 handle 之前调用此函数
     * @param listener
     * @deprecated 不建议使用此方法在代码中添加,如需添加请直接在配置文件中配置
     */

@@ -6,7 +6,7 @@ import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.apache.spark.streaming.{CongestionMonitorListener, JobInfoReportListener, Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
-import org.fire.spark.streaming.core.kit.Utils
+import org.fire.spark.streaming.core.kit.{Heartbeat, Utils}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ArrayBuffer
@@ -58,7 +58,7 @@ trait FireStreaming {
 
   /**
     * 添加一个sparkListeners
-    * 如使用此函数添加,则必须在 init 中调用此函数
+    * 如使用此函数添加,则必须在 handle 之前调用此函数
     * @param listener
     * @deprecated 不建议使用此方法在代码中添加,如需添加请直接在配置文件中配置
     */
@@ -72,7 +72,7 @@ trait FireStreaming {
     */
   def handle(ssc: StreamingContext): Unit
 
-  private var heartbeatExecutor: ScheduledThreadPoolExecutor = null
+  private var heartbeat: Heartbeat = _
 
   /**
     * 心跳检测程序
@@ -80,29 +80,8 @@ trait FireStreaming {
     * @param ssc
     */
   def heartbeat(ssc: StreamingContext): Unit = {
-    val sparkConf = ssc.sparkContext.getConf
-
-    sparkConf.get("spark.monitor.heartbeat.api", "none") match {
-      case "none" =>
-      case heartbeat =>
-
-        val initialDelay = sparkConf.get("spark.monitor.heartbeat.initialDelay", "60000").toLong
-        val period = sparkConf.get("spark.monitor.heartbeat.period", "10000").toLong
-
-        val threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat("spark-monitor-heartbeat-thread").build()
-        heartbeatExecutor = new ScheduledThreadPoolExecutor(1, threadFactory)
-        heartbeatExecutor.setRemoveOnCancelPolicy(true)
-        heartbeatExecutor.scheduleAtFixedRate(new Runnable {
-          override def run(): Unit = {
-
-            Try {
-              logger.info(s"send heartbeat to $heartbeat/${sparkConf.getAppId}/${period * 1.5} ")
-              s"curl $heartbeat/${sparkConf.getAppId}/${period * 3} " #>> new File("/dev/null") !!
-            }
-
-          }
-        }, initialDelay, period, TimeUnit.MILLISECONDS)
-    }
+    heartbeat = new Heartbeat(ssc)
+    heartbeat.start()
   }
 
 
@@ -191,9 +170,8 @@ trait FireStreaming {
     heartbeat(context)
     context.awaitTermination()
 
-    if (heartbeatExecutor != null) {
-      logger.info("shutdown heartbeatExecutor ...")
-      heartbeatExecutor.shutdown()
+    if (heartbeat != null) {
+      heartbeat.stop()
     }
     beforeStop(context)
   }
