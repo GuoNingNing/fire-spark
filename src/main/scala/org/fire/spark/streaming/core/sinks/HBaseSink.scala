@@ -11,12 +11,14 @@ import org.fire.spark.streaming.core.plugins.hbase.HbaseConnPool
 
 import scala.reflect.ClassTag
 import scala.collection.JavaConversions._
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by cloud on 18/4/3.
   */
 class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkContext,
-                               initParams: Map[String, String] = Map.empty[String, String]) extends Sink[T]{
+                                           initParams: Map[String, String] = Map.empty[String, String])
+  extends Sink[T]{
 
   override val paramPrefix: String = "spark.sink.hbase."
 
@@ -26,7 +28,8 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
     p
   }
 
-  private val tableName = prop.getProperty("table")
+  private val tableName = prop.getProperty("hbase.table")
+  private val commitBatch = prop.getProperty("hbase.commit.batch","1000").toInt
 
   private def getTable(table: String) : Table = {
     val conf = HBaseConfiguration.create
@@ -43,12 +46,26 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
   override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
     rdd.foreachPartition { r =>
       val table = getTable(tableName)
-      val mutationList = r.toList
-      mutationList match {
-        case put: List[Put] => table.put(put.asInstanceOf[List[Put]])
-        case del: List[Delete] => table.delete(del.asInstanceOf[List[Delete]])
-        case _ =>
+      var putList: ArrayBuffer[Put] = new ArrayBuffer[Put]()
+      var delList: ArrayBuffer[Delete] = new ArrayBuffer[Delete]()
+
+      r.foreach {
+        case put: Put =>
+          putList += put
+          if(putList.length > commitBatch){
+            table.put(putList)
+            putList = new ArrayBuffer[Put]()
+          }
+        case del: Delete =>
+          delList += del
+          if(delList.length > commitBatch){
+            table.delete(delList)
+            delList = new ArrayBuffer[Delete]()
+          }
       }
+      if(putList.nonEmpty) table.put(putList)
+      if(delList.nonEmpty) table.delete(delList)
+
       table.close()
     }
   }
