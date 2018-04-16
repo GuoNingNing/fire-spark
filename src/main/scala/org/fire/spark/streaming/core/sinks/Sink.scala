@@ -39,8 +39,8 @@ trait Sink[T] extends Serializable {
   /**
     * 输出
     *
-    * @param rdd
-    * @param time
+    * @param rdd spark.RDD
+    * @param time spark.streaming.Time
     */
   def output(rdd: RDD[T], time: Time)
 }

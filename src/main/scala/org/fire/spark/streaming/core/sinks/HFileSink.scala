@@ -37,8 +37,8 @@ class HFileSink[T: ClassTag](@transient override val sc: SparkContext,
 
   /** 输出
     *
-    * @param rdd
-    * @param time
+    * @param rdd  初始化HFileSink时指定类型的RDD
+    * @param time spark.streaming.Time
     */
   override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
     rdd.foreachPartition { i =>
