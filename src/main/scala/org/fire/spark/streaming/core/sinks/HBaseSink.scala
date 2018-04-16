@@ -17,7 +17,7 @@ import scala.collection.mutable.ArrayBuffer
   * Created by cloud on 18/4/3.
   */
 class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkContext,
-                                           initParams: Map[String, String] = Map.empty[String, String])
+                                          val initParams: Map[String, String] = Map.empty[String, String])
   extends Sink[T]{
 
   override val paramPrefix: String = "spark.sink.hbase."
@@ -30,12 +30,16 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
 
   private val tableName = prop.getProperty("hbase.table")
   private val commitBatch = prop.getProperty("hbase.commit.batch","1000").toInt
+  private val bufferSize = prop.getProperty("hbase.commit.buffer",s"${5*1024*1024}").toLong
 
-  private def getTable(table: String) : Table = {
+  private def getTable : BufferedMutator = {
     val conf = HBaseConfiguration.create
     prop.foreach {case (k,v) => conf.set(k,v)}
     val connection = HbaseConnPool.connect(conf)
-    connection.getTable(TableName.valueOf(table))
+    val bufferedMutatorParams = new BufferedMutatorParams(TableName.valueOf(tableName))
+    bufferedMutatorParams.writeBufferSize(bufferSize)
+    bufferedMutatorParams.maxKeyValueSize(commitBatch)
+    connection.getBufferedMutator(bufferedMutatorParams)
   }
 
   /** 输出
@@ -45,27 +49,14 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
     */
   override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
     rdd.foreachPartition { r =>
-      val table = getTable(tableName)
-      var putList: ArrayBuffer[Put] = new ArrayBuffer[Put]()
-      var delList: ArrayBuffer[Delete] = new ArrayBuffer[Delete]()
+      val table = getTable
 
       r.foreach {
-        case put: Put =>
-          putList += put
-          if(putList.length > commitBatch){
-            table.put(putList)
-            putList = new ArrayBuffer[Put]()
-          }
-        case del: Delete =>
-          delList += del
-          if(delList.length > commitBatch){
-            table.delete(delList)
-            delList = new ArrayBuffer[Delete]()
-          }
+        case put: Put => table.mutate(put)
+        case del: Delete => table.mutate(del)
       }
-      if(putList.nonEmpty) table.put(putList)
-      if(delList.nonEmpty) table.delete(delList)
 
+      table.flush()
       table.close()
     }
   }
