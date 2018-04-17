@@ -7,7 +7,7 @@
         <dependencySet>
             <useProjectArtifact>true</useProjectArtifact>
             <outputDirectory>lib</outputDirectory>
-            <scope>runtime</scope>
+            <scope>provided</scope>
         </dependencySet>
     </dependencySets>
     <fileSets>

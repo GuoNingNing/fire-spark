@@ -101,13 +101,8 @@ trait FireStreaming {
       sparkConf.setAppName("LocalDebug").setMaster("local[*]")
       sparkConf.set("spark.streaming.kafka.maxRatePerPartition", "10")
     }
-    // 如果有心跳监控，则提交成功后退出终端
-    if(sparkConf.contains("spark.monitor.heartbeat.api")){
-      sparkConf.set("spark.yarn.submit.waitAppCompletion","false")
-    }
 
     init(sparkConf)
-    //    addAllEventListeners("org.apache.spark.StartSparkAppListener")
 
     val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
     if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)

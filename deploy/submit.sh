@@ -21,8 +21,10 @@ MAIN_PARAMS=$(grep 'spark.main.params' $PROP | grep -v '^#' | awk -F'params=' '{
 
 spark_appname=$(grep 'spark.app.name' $PROP | grep -v '^#' | awk -F'=' '{print $2}')
 
-if [ "x$2" != "x" ]; then
-    MAIN_PARAMS=$2
+shift
+
+if [ "x$1" != "x" ]; then
+    MAIN_PARAMS="$@"
     echo "$MAIN_PARAMS"
 fi
 
@@ -55,6 +57,6 @@ sudo -u hdfs spark-submit \
     --queue spark \
     $jars \
     --properties-file ${PROP} \
-    --class ${MAIN} ${MAIN_JAR} "${MAIN_PARAMS}" "${USER_PARAMS}"
+    --class ${MAIN} ${MAIN_JAR} "$@"
 
 fi

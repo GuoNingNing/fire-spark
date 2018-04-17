@@ -97,6 +97,7 @@
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-spark-13_2.10</artifactId>
             <version>${es.version}</version>
+            <scope>provided</scope>
         </dependency>
         <!--zkClient-->
         <dependency>
