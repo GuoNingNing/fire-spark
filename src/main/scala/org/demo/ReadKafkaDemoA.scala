@@ -71,6 +71,16 @@ object ReadKafkaDemoA extends FireStreaming with Logging {
     * 如何实现自定义的filterPartitions
     * filter 底层使用的也是MapPartitionsRDD实现的
     * 这里是模仿mapPartitions的方法实现的示例
+    *
+    * 不建议如此实现,此处只作为调研示例
+    * 使用rdd现有的mapPartitions也能实现相同的功能
+    *
+    * rdd.mapPartitions {
+    *   it =>
+    *     ... 全局的一些动作
+    *     it.filter(...)
+    * }
+    *
     */
   private def myFilterPartitions(sparkContext: SparkContext,
                                  rdd: RDD[String]): RDD[String] = SparkInternal.withScope(sparkContext){
