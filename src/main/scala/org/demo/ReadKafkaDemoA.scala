@@ -61,7 +61,7 @@ object ReadKafkaDemoA extends FireStreaming with Logging {
     val logs = source.getDStream[String](_.value())
 
     logs.foreachRDD((rdd, time) => {
-      val myRDD = myFilterPartitions(rdd.sparkContext,rdd)
+      val myRDD = myFlatMapPartitions(rdd.sparkContext,myFilterPartitions(rdd.sparkContext,rdd))
       myRDD.take(10).foreach(println)
       source.updateOffsets(time.milliseconds)
     })
@@ -90,5 +90,21 @@ object ReadKafkaDemoA extends FireStreaming with Logging {
       (context,index,iterator) => filter(iterator),
       preservesPartitioning = true
     )
+  }
+
+  /**
+    * 如何实现自定义的flatMapPartitions
+    */
+  private def myFlatMapPartitions(sc: SparkContext,
+                                  rdd: RDD[String]): RDD[String] = SparkInternal.withScope(sc){
+    val flatMap = (it: Iterator[String]) => {
+      val redis = RedisConnectionPool.connect(Map.empty[String,String])
+      it.flatMap { d =>
+        val v = redis.get(d)
+        v.split("\t")
+      }
+    }
+    SparkInternal.clean(flatMap)
+    SparkInternal.newMapPartitionsRDD[String,String](rdd, (context,index,it) => flatMap(it))
   }
 }
