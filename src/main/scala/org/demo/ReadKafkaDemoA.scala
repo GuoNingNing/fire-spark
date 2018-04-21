@@ -1,10 +1,14 @@
 package org.demo
 
-import org.apache.spark.SparkConf
+import org.apache.spark.{SparkConf, SparkContext, SparkInternal}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.StreamingContext
 import org.fire.spark.streaming.core.kit.Heartbeat
 import org.fire.spark.streaming.core.{FireStreaming, Logging}
 import org.fire.spark.streaming.core.plugins.kafka.KafkaDirectSource
+import org.fire.spark.streaming.core.plugins.redis.RedisConnectionPool
+
+import scala.reflect.ClassTag
 
 object ReadKafkaDemoA extends FireStreaming with Logging {
 
@@ -57,8 +61,34 @@ object ReadKafkaDemoA extends FireStreaming with Logging {
     val logs = source.getDStream[String](_.value())
 
     logs.foreachRDD((rdd, time) => {
-      rdd.take(10).foreach(println)
+      val myRDD = myFilterPartitions(rdd.sparkContext,rdd)
+      myRDD.take(10).foreach(println)
       source.updateOffsets(time.milliseconds)
     })
+  }
+
+  /**
+    * 如何实现自定义的filterPartitions
+    * filter 底层使用的也是MapPartitionsRDD实现的
+    * 这里是模仿mapPartitions的方法实现的示例
+    */
+  private def myFilterPartitions(sparkContext: SparkContext,
+                                 rdd: RDD[String]): RDD[String] = SparkInternal.withScope(sparkContext){
+    val filter = (iterator: Iterator[String]) => {
+      /**
+        * 这里就是写在Partitions中的处理代码
+        */
+      val redis = RedisConnectionPool.connect(Map("host" -> "127.0.0.1"))
+      iterator.filter { d =>
+        val v = redis.get(d)
+        v != ""
+      }
+    }
+    SparkInternal.clean(filter)
+    SparkInternal.newMapPartitionsRDD[String,String](
+      rdd,
+      (context,index,iterator) => filter(iterator),
+      preservesPartitioning = true
+    )
   }
 }

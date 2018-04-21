@@ -26,10 +26,10 @@ import scala.util.{Failure, Success}
 /**
   * Created by cloud on 18/1/17.
   *
-  * 必须依赖调整后的spark-submit 进行提交,目前还未调整成sparkLauncher的模式提交
-  * 修改后的spark-submit 相关依赖代码在test下
-  * 如果想使用可以把修改后的代码编译之后替换spark原生的这几个类文件,即可
-  * 这里做的修改只添加了monitor相关的参数和添加提交请求的函数,源代码其它功能方法未做任何改动
+  * 这是通过spark-submit来提交任务的监控服务
+  * 对应的spark-submit调整代码在test中
+  * 如若使用编译代码之后把对应的class替换到spark对应的jar中既可以使用
+  * 变更代码只增加了提交监控的函数,其它任何功能均为做变更
   *
   */
 private[spark] class YarnApplicationMonitorServer(
@@ -37,6 +37,7 @@ private[spark] class YarnApplicationMonitorServer(
     val conf : SparkConf) extends ThreadSafeRpcEndpoint with Logging{
 
   private val appIdMap = new ConcurrentHashMap[String,AppStatus]()
+  private val attemptMap = new ConcurrentHashMap[String,Int]()
   private val scheduledMap = new ConcurrentHashMap[String,Long]()
   private val jobNameMap = new ConcurrentHashMap[String,AppStatus]()
   private val waitConstantTime = 3600*24*100
@@ -46,6 +47,7 @@ private[spark] class YarnApplicationMonitorServer(
   private var checkAppReportFuture : ScheduledFuture[_] = _
 
   private val monitorInterval = conf.getLong(YarnApplicationMonitorServer.MONITOR_INTERVAL,5000L)
+  private val attemptNumber = conf.getInt(YarnApplicationMonitorServer.ATTEMPT_NUMBER,3)
   private val checkpointFile = conf.get(YarnApplicationMonitorServer.CHECKPOINT_FILE,"yarnApplicationMonitorSer.cp")
   private val yarnConfiguration = new YarnConfiguration(SparkHadoopUtil.get.newConfiguration(conf))
 
@@ -54,7 +56,11 @@ private[spark] class YarnApplicationMonitorServer(
 
   override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
     case MonitorAppRequest(appId,command) =>
-      appIdMap += appId -> AppStatus(0,command)
+      val attempt = attemptMap.getOrElse(command.command,0)
+      if(attempt < attemptNumber) {
+        attemptMap += command.command -> (attempt + 1)
+        appIdMap += appId -> AppStatus(0, command)
+      }
       context.reply(MonitorAppResponse(s"register $appId monitor success",MonitorResponseResult.SUCCESS))
 
     case KillMonitorAppRequest(appId) =>
@@ -69,6 +75,7 @@ private[spark] class YarnApplicationMonitorServer(
 
     case CancelMonitorAppRequest(appId) =>
       try{
+        attemptMap -= appIdMap.getOrElse(appId,AppStatus(0,StartCommand(""))).command.command
         appIdMap -= appId
         yarnClient.killApplication(YarnApplicationMonitorServer.appIdFromString(appId))
         context.reply(MonitorAppResponse(s"$appId monitor cancel success.",MonitorResponseResult.SUCCESS))
@@ -128,18 +135,17 @@ private[spark] class YarnApplicationMonitorServer(
     try{
       if(appIdMap.containsKey(appId)) {
         val appStatus = appIdMap(appId)
-        val cmd = appStatus.command
-        val status = appStatus.status + 1
-        appIdMap.update(appId, AppStatus(status, cmd))
+        val cmd = appStatus.command.command
+        appIdMap += appId -> AppStatus(appStatus.status + 1,StartCommand(cmd))
         val res = runInNewThread(s"app-monitor-$appId-submit") {
-          SparkSubmit.submit(new SparkSubmitArguments(cmd.command.split(CIFS)))
+          SparkSubmit.submit(new SparkSubmitArguments(cmd.split(CIFS)))
         }
         res.onComplete {
           case Success(s) =>
             appIdMap -= appId
 
           case Failure(e) =>
-            logWarning(s"attempts $status restart app $appId failed. ",e)
+            logWarning(s"attempts ${appStatus.status} restart app $appId failed. ",e)
         }
       }
     }catch {
@@ -184,23 +190,18 @@ private[spark] class YarnApplicationMonitorServer(
         case NonFatal(e) => logError("getApplicationReport failed. ", e)
       }
     }
-    val commandList = appIdMap.filter(d => d._2.status == 0).map {
-      case (appId,appStatus) => appStatus.command.command
-    }.toList
-    appIdMap.filter(d => d._2.status != 0).foreach { case (appId,appStatus) =>
-      val cmd = appStatus.command.command
-      if(commandList.contains(cmd)){
-        logInfo(s"Application $appId already submit success.")
+    val activeCmdList = appIdMap.filter(d => d._2.status == 0).map(_._2.command.command).toList
+    appIdMap.filter(d => d._2.status != 0).foreach { case (appId, appStatus) =>
+      if(activeCmdList.contains(appStatus.command.command)){
         appIdMap -= appId
-      }else {
+      }else{
         /**
-          * 这里还不确定是否能有效重新提交任务。有待进一步设计更合理的方式
-          * status 累计达到三次之后就不再尝试重启
-          * 这里存在另外一个问题,如果一个任务提交成功后,但是运行失败,此时就会导致任务被无数次重试
-          * 因为在重新提交成功之后状态会被清零,appId会被更新
-          * 目前暂无合理解决方案,除非使用command来作为全局唯一的标识
+          * appStatus.status 表明任务submit失败次数,因为submit成功之后status就会被清零
+          * attempt 表明任务running次数,因为只有running时才会提交监控attempt次数增加
+          * 
           */
-        if(appStatus.status < 3) {
+        val attempt = attemptMap.getOrElse(appStatus.command.command,0)
+        if(appStatus.status < attemptNumber && attempt < attemptNumber){
           startApp(appId)
         }
       }
@@ -292,6 +293,7 @@ object YarnApplicationMonitorServer extends Logging{
   val MONITOR_PORT = s"$MONITOR_PREFIX.server.port"
   val MONITOR_INTERVAL = s"$MONITOR_PREFIX.interval.ms"
   val CHECKPOINT_FILE = s"$MONITOR_PREFIX.checkpoint.file"
+  val ATTEMPT_NUMBER = s"$MONITOR_PREFIX.attempt.number"
   val COMMAND_IFS = "\u0001"
   val PARAM_IFS = "\u0000"
 

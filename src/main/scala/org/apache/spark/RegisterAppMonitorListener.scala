@@ -14,7 +14,7 @@ import scala.util.control.NonFatal
   * 目前的问题在于无法保证onApplicationEnd事件一定被触发,即重启请求不一定会发送
   *
   */
-class StartSparkAppListener(val sparkConf: SparkConf) extends SparkListener with Logging{
+class RegisterAppMonitorListener(val sparkConf: SparkConf) extends SparkListener with Logging{
 
   private val appName = sparkConf.get("spark.app.name","None")
   private val runConf = sparkConf.get("spark.run.main.conf","None")
