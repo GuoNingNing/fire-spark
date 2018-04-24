@@ -6,10 +6,10 @@ import java.util.Properties
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.Time
+import org.fire.spark.streaming.core.kit.Utils
 
 import scala.collection.JavaConversions._
 import scala.collection.Map
-import scalaj.http._
 import scala.reflect.ClassTag
 
 /**
@@ -48,14 +48,12 @@ class InfluxDBSink[T : ClassTag](@transient override val sc : SparkContext,
         case (h : String,p : String,d : String,v : String) => (v,h,p,d)
         case _ => (d.toString,host,port,db)
       }
-      val res: HttpResponse[String] = Http(s"http://$ip:$pt/write?db=$dbName").postData(postData).asString
-      res.code match {
+      val (code,res) = Utils.httpPost(s"http://$ip:$pt/write?db=$dbName",postData)
+      code match {
         case d if d >= 200 && d < 300 =>
-          logger.info(s"Write influxDB successful. ${res.code}")
-        case d if d >= 400 =>
-          logger.error(s"Write influxDB failed. $res")
+          logger.info(s"Write influxDB successful. $code")
         case _ =>
-          logger.warn(s"Write influxDB unknown error. $res")
+          logger.warn(s"Write influxDB failed. code: $code, res: $res")
       }
     })
   }

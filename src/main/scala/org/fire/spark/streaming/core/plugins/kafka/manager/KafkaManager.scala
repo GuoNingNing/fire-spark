@@ -9,7 +9,6 @@ package org.fire.spark.streaming.core.plugins.kafka.manager
 import java.lang.reflect.Constructor
 import java.{util => ju}
 
-import org.apache.spark.internal.Logging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.rdd.RDD
@@ -17,6 +16,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.kafka010._
+import org.fire.spark.streaming.core.Logging
 import org.fire.spark.streaming.core.kit.Utils
 
 import scala.reflect.ClassTag

@@ -1,23 +1,27 @@
 # Fire-Spark
     让Spark开发变得更简单
+    
+   [Demo工程](https://github.com/GuoNingNing/fire-spark-demo)
+    
 ### BUILD和使用方法
-##### 1.构建方法
+#### 1.构建方法
 
 ```
     $git clone https://github.com/GuoNingNing/fire-spark.git
     $cd fire-spark
-    $mvn clean install -DskipTests
+    $mvn clean install
 
+    maven构建时已默认在pom中跳过了所有的test代码的编译和测试
     构建完成之后会将jar安装到m2的对应路径下，使用时在自己的项目的pom.xml文件里添加
     
     <dependency>
         <groupId>org.fire.spark.streaming</groupId>
     	<artifactId>fire-spark</artifactId>
-    	<version>2.1.0_kafka-0.10</version>
+    	<version>2.2.0_kafka-0.10</version>
     </dependency>
 ```
 
-##### 2.配置说明
+#### 2.配置说明
 
 ```
 
@@ -189,7 +193,7 @@ spark.sink.redis.timeout=30
 
 ```
   
-##### 3.示例代码  
+#### 3.示例代码  
   
 ```scala    
 package z.cloud.t3
@@ -212,7 +216,7 @@ object Demon extends FireStreaming {
 
 ```
 
-##### 4.运行示例代码
+#### 4.运行示例代码
 
 ```
     使用script中的create_default_conf.sh创建标准配置文件
@@ -232,12 +236,17 @@ object Demon extends FireStreaming {
     
 ```
 
-##### 5.API 说明
-###### 5.1.框架说明
+#### 5.API 说明
+##### 5.1.框架说明
 ```
     org
-    ----apache.spark.streaming[扩展的spark streaming一些组建]
-        ----两个spark Listener 用户统计批次信息和监控批次执行
+    ----apache.spark
+        ----streaming[自定义的spark streaming一些Listenter]
+            ----CongestionMonitorListener 拥堵监控
+                ----[会对streaming任务是否产生拥堵进行告警和停止任务]
+            ----JobInfoReportListener 任务信息记录
+                ----[会对streaming对任务详细信息进行记录输出到对应的kafka中]
+            ----自定义及使用方法见后文的 5.2 Streaming Listener内容
         ----RpcDemo里是spark RPC服务和client实现的演示代码
             ----对应的启动代码在resources里
             ----spark-rpcdemo client启动代码放到spark/bin下即可使用
@@ -281,25 +290,13 @@ object Demon extends FireStreaming {
             ----[需要的参数是properties类型的文件,可由上面的脚本产生]
             ----[将run脚本加入到crontab中即可简单实现失败重启]
             ----[脚本自带防重复启动的功能]
+        ----create_template_project.sh
+            ----[创建模版项目,需要一个路径,将会在这个路径下创建模版项目]
+            ----[模版项目包含一个父级pom文件以及一个子模块和模块需要的pom和assembly文件及相关目录结构]
 ```
 
-###### 5.2.Spark相关内容
-```
-    spark Rpc 服务
-    
-        想通过 spark RPC 实现服务端则须实现
-        ThreadSafeRpcEndpoint 或 RpcEndpoint
-        一般通过实现前者来实现自己的服务,如同字面意思是线程安全的
-        
-        一般需要实现4个方法
-        onStart
-            服务启动时一些内部初始化和启动其他线程服务都在这里处理
-        receive
-            接收client发过来的请求,但是不需要回复
-        receiveAndReply
-            接受client发过来的请求,并返回response
-        onStop
-            服务结束时需要做的一些清理动作在这里处理
-        具体实现详情参考RpcDemo服务的实现
+##### 5.2.Spark相关内容
+* [Spark RPC](https://github.com/GuoNingNing/fire-spark/wiki/Spark-RPC)
+* [Spark Listener](https://github.com/GuoNingNing/fire-spark/wiki/SparkListener)
+* [Streaming Listener](https://github.com/GuoNingNing/fire-spark/wiki/StreamingListener)
 
-```

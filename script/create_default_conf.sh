@@ -74,7 +74,7 @@ function spark_run_params(){
 	_p "Executor个数设置\ndefault=1" "instances" "1"
 	_p "Executor使用cpu个数设置\ndefault=1" "cores" "1"
 	_p "Executor使用内存大小设置\ndefault=512MB" "memory" "512MB"
-	_p "同driver节点配置作用相同,但是是针对executor的\ndefault=false" "userClassPathFirst" "true"
+	_p "同driver节点配置作用相同,但是是针对executor的\ndefault=false" "userClassPathFirst" "false"
 }
 
 #spark 任务动态资源分配的配置

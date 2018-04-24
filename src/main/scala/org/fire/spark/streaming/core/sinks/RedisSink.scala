@@ -57,6 +57,9 @@ class RedisSink[T <: scala.Product : ClassTag : TypeTag](@transient override val
       }(RedisConnectionPool.connect(redisEndpoint))
     })
   }
+
+  def close(): Unit = RedisConnectionPool.close()
+
 }
 
 object RedisSink {
