@@ -94,10 +94,10 @@ object ReadKafkaDemoA extends FireStreaming with Logging {
         v != ""
       }
     }
-    SparkInternal.clean(filter)
+    val cleanFilter = SparkInternal.clean(filter)
     SparkInternal.newMapPartitionsRDD[String,String](
       rdd,
-      (context,index,iterator) => filter(iterator),
+      (context,index,iterator) => cleanFilter(iterator),
       preservesPartitioning = true
     )
   }
@@ -114,7 +114,7 @@ object ReadKafkaDemoA extends FireStreaming with Logging {
         v.split("\t")
       }
     }
-    SparkInternal.clean(flatMap)
-    SparkInternal.newMapPartitionsRDD[String,String](rdd, (context,index,it) => flatMap(it))
+    val cleanFunc = SparkInternal.clean(flatMap)
+    SparkInternal.newMapPartitionsRDD[String,String](rdd, (context,index,it) => cleanFunc(it))
   }
 }
