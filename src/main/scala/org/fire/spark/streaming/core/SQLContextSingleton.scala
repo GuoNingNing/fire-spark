@@ -1,7 +1,7 @@
 package org.fire.spark.streaming.core
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 /**
   * Created by guoning on 16/6/15.
@@ -15,7 +15,8 @@ object SQLContextSingleton {
 
   def getInstance(@transient sparkContext: SparkContext): SQLContext = {
     if (instance == null) {
-      instance = new SQLContext(sparkContext)
+      instance = SparkSession.builder().config(sparkContext.getConf).getOrCreate().sqlContext
+      //new SQLContext(sparkContext)
     }
     instance
   }
@@ -28,7 +29,7 @@ object SQLContextSingleton {
     */
   def getHiveContext(@transient sparkContext: SparkContext): SQLContext = {
     if (hiveContext == null) {
-      hiveContext = new org.apache.spark.sql.hive.HiveContext(sparkContext)
+      hiveContext = SparkSession.builder().config(sparkContext.getConf).enableHiveSupport().getOrCreate().sqlContext
     }
     hiveContext
   }

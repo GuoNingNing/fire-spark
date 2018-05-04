@@ -1,5 +1,6 @@
 package org.fire.spark.streaming.core
 
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.fire.spark.streaming.core.kit.Utils
@@ -20,10 +21,6 @@ trait FireStreaming {
   private final var _args: Array[String] = _
 
   private val sparkListeners = new ArrayBuffer[String]()
-
-
-  // 是否开启监控
-  private var monitor: Boolean = false
 
   // checkpoint目录
   private var checkpointPath: String = ""
@@ -51,11 +48,12 @@ trait FireStreaming {
   /**
     * 添加sparkListener
     * 如使用此函数添加,则必须在 handle 函数之前调用此函数
+    *
     * @param listener
     * @deprecated 建议直接在配置文件中添加
     */
   @deprecated
-  def addSparkListeners(listener : String): Unit = sparkListeners += listener
+  def addSparkListeners(listener: String): Unit = sparkListeners += listener
 
   /**
     * 处理函数
@@ -84,16 +82,14 @@ trait FireStreaming {
 
     init(sparkConf)
 
-    val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners","")
-    if (extraListeners != "") sparkConf.set("spark.extraListeners",extraListeners)
+    val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
+    if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
 
 
-    //    val sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
+    val sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
     // 时间间隔
     val slide = sparkConf.get("spark.batch.duration").toInt
-    //    val sc = sparkSession.sparkContext
-    val sc = new SparkContext(sparkConf)
-    val ssc = new StreamingContext(sc, Seconds(slide))
+    val ssc = new StreamingContext(sparkSession.sparkContext, Seconds(slide))
 
     handle(ssc)
     ssc
@@ -107,7 +103,6 @@ trait FireStreaming {
         |"Usage: FireStreaming [options]
         |
         | Options are:
-        |   --monitor <是否开启监控  true|false>
         |   --checkpointPath <checkpoint 目录设置>
         |   --createOnError <从 checkpoint 恢复失败,是否重新创建 true|false>
         |""".stripMargin)
@@ -123,9 +118,6 @@ trait FireStreaming {
 
     while (argv.nonEmpty) {
       argv match {
-        case ("--monitor") :: value :: tail =>
-          monitor = value.toBoolean
-          argv = tail
         case ("--checkpointPath") :: value :: tail =>
           checkpointPath = value
           argv = tail
