@@ -30,8 +30,6 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
 
   private val tableName = prop.getProperty("hbase.table")
   private val commitBatch = prop.getProperty("hbase.commit.batch","1000").toInt
-  private val bufferSize = prop.getProperty("hbase.commit.buffer",s"${5*1024*1024}").toLong
-  private val maxValueSize = prop.getProperty("hbase.max.value","1000").toInt
 
   private def getConnect: Connection = {
     val conf = HBaseConfiguration.create
@@ -42,8 +40,6 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
   private def getMutator: BufferedMutator = {
     val connection = getConnect
     val bufferedMutatorParams = new BufferedMutatorParams(TableName.valueOf(tableName))
-    bufferedMutatorParams.writeBufferSize(bufferSize)
-    bufferedMutatorParams.maxKeyValueSize(maxValueSize)
     connection.getBufferedMutator(bufferedMutatorParams)
   }
 
