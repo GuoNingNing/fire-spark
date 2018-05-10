@@ -51,7 +51,7 @@ trait FireStreaming {
   /**
     * 添加sparkListener
     * 如使用此函数添加,则必须在 handle 函数之前调用此函数
-    * @param listener
+    * @param listener sparkListener的类名称,例:"org.apache.spark.TestListener"
     * @deprecated 建议直接在配置文件中添加
     */
   @deprecated
