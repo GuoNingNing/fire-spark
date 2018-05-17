@@ -40,10 +40,6 @@ object Utils {
     Class.forName(className, true, Thread.currentThread().getContextClassLoader)
   }
 
-  def main(args: Array[String]): Unit = {
-
-  }
-
   def httpPost(url : String,data : String,headers : Map[String,String] = Map.empty[String,String]): (Int,String) ={
     var req = Http(url).postData(data)
     headers.foreach {case (k,v) => req=req.header(k,v)}
@@ -51,10 +47,15 @@ object Utils {
     (res.code,res.body)
   }
 
-  def httpGet(url : String,param : Seq[(String,String)]) : (Int,String) = {
+  def httpGet(url : String,param : Seq[(String,String)] = Seq.empty[(String,String)]) : (Int,String) = {
     val req = Http(url).params(param)
     val res = req.asString
     (res.code,res.body)
   }
 
+
+  def main(args: Array[String]): Unit = {
+
+    println(Utils.httpGet("http://bigdata-dev:9200/app/heartbeat/application_1526125629402_7874/15000",Seq.empty[(String,String)]))
+  }
 }

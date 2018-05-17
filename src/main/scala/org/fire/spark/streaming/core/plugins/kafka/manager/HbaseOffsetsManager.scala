@@ -1,9 +1,11 @@
 package org.fire.spark.streaming.core.plugins.kafka.manager
 
+import java.util
+
 import org.apache.hadoop.hbase.{CellUtil, HColumnDescriptor, HTableDescriptor, TableName}
-import org.apache.hadoop.hbase.client.{Put, Scan, Table}
+import org.apache.hadoop.hbase.client.{Delete, Put, Scan, Table}
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp
-import org.apache.hadoop.hbase.filter.{BinaryComparator, RowFilter}
+import org.apache.hadoop.hbase.filter._
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.SparkConf
@@ -108,5 +110,38 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
 
     }
     logInfo(s"updateOffsets [ $groupId,${offsetInfos.mkString(",")} ]")
+  }
+
+  /**
+    * 删除Offset
+    *
+    * @param groupId
+    * @param topics
+    */
+  override def delOffsets(groupId: String, topics: Set[String]): Unit = {
+    import org.apache.hadoop.hbase.util.Bytes
+
+
+    val filterList = new FilterList(FilterList.Operator.MUST_PASS_ONE)
+
+    for (topic <- topics) {
+      val filter = new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryPrefixComparator(Bytes.toBytes(s"${generateKey(groupId, topic)}#")))
+      filterList.addFilter(filter)
+    }
+
+    val scan = new Scan()
+    scan.setFilter(filterList)
+
+    val rs = table.getScanner(scan)
+    val iter = rs.iterator()
+
+    val deletes = new util.ArrayList[Delete]()
+    while (iter.hasNext) {
+      val r = iter.next()
+      deletes.add(new Delete(Bytes.toBytes(new String(r.getRow))))
+    }
+    rs.close()
+    table.delete(deletes)
+    logInfo(s"deleteOffsets [ $groupId,${topics.mkString(",")} ] ${deletes.mkString(" ")}")
   }
 }

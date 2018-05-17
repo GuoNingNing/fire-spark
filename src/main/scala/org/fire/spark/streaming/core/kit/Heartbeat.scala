@@ -18,7 +18,7 @@ class Heartbeat(private val ssc: StreamingContext) extends Logging {
 
   def start(): Unit = {
     val sparkConf = ssc.sparkContext.getConf
-
+    logInfo("start heartbeatExecutor ...")
     sparkConf.get("spark.monitor.heartbeat.api", "none") match {
       case "none" =>
       case heartbeat =>
@@ -28,9 +28,12 @@ class Heartbeat(private val ssc: StreamingContext) extends Logging {
 
         heartbeatExecutor.scheduleAtFixedRate(new Runnable {
           override def run(): Unit = {
-            Try {
-              logInfo(s"send heartbeat to $heartbeat/${sparkConf.getAppId}/${period * 1.5} ")
-              Utils.httpGet(s"$heartbeat/${sparkConf.getAppId}/${period * 3}",Seq.empty[(String,String)])
+            try {
+              val url = s"$heartbeat/${sparkConf.getAppId}/${period * 3}"
+              val result = Utils.httpGet(url)
+              logInfo(s"send heartbeat to $url $result")
+            } catch {
+              case e: Throwable => e.printStackTrace()
             }
           }
         }, initialDelay, period, TimeUnit.MILLISECONDS)
