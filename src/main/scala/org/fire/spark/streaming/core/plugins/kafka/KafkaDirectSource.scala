@@ -33,7 +33,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
   private var canCommitOffsets: CanCommitOffsets = _
 
   // 分区数
-  private lazy val repartition: Int = sparkConf.get("spark.source.kafka.consume.repartition", "0").toInt
+  lazy val repartition: Int = sparkConf.get("spark.source.kafka.consume.repartition", "0").toInt
 
   // kafka 消费 topic
   private lazy val topicSet: Set[String] = specialKafkaParams.getOrElse("consume.topics",
@@ -47,7 +47,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
     } toMap
   } ++ specialKafkaParams
 
-  private lazy val groupId = kafkaParams.get("group.id")
+  lazy val groupId = kafkaParams.get("group.id")
 
   val km = new KafkaManager(ssc.sparkContext.getConf)
 
