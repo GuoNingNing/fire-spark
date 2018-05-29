@@ -8,21 +8,22 @@ import org.elasticsearch.spark.rdd.EsSpark
 
 import scala.collection.Map
 import scala.language.postfixOps
+import scala.reflect.ClassTag
+import scala.reflect.runtime.universe.TypeTag
 
 /**
   * Created by guoning on 16/8/19.
   *
   * 输出ES
   */
-class EsSink[T](@transient override val sc : SparkContext,
+class EsSink[T](@transient override val sc: SparkContext,
                 initParams: Map[String, String] = Map.empty[String, String])
   extends Sink[T] {
 
   override val paramPrefix: String = "spark.sink.es."
 
-  private lazy val esParam = param ++ initParams
-  private val index = esParam("index")
-  private val esType = esParam("type")
+
+  lazy val esParam: Predef.Map[String, String] = param.map { case (k, v) => s"es.$k" -> v } ++ initParams
 
   /**
     * 输出
@@ -30,8 +31,8 @@ class EsSink[T](@transient override val sc : SparkContext,
     */
   def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
     rdd match {
-      case _ : RDD[String] => EsSpark.saveJsonToEs(rdd,s"$index/$esType",esParam)
-      case _ => EsSpark.saveToEs (rdd, s"$index/$esType", esParam)
+      case rdd: RDD[String] => EsSpark.saveJsonToEs(rdd, esParam)
+      case _ => EsSpark.saveToEs(rdd, esParam)
     }
   }
 }
