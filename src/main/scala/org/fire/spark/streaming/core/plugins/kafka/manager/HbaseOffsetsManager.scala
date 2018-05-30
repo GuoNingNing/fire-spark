@@ -2,6 +2,7 @@ package org.fire.spark.streaming.core.plugins.kafka.manager
 
 import java.util
 
+import kafka.common.TopicAndPartition
 import org.apache.hadoop.hbase.{CellUtil, HColumnDescriptor, HTableDescriptor, TableName}
 import org.apache.hadoop.hbase.client.{Delete, Put, Scan, Table}
 import org.apache.hadoop.hbase.util.Bytes
@@ -90,9 +91,16 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
       rs.close()
     }
 
-    logInfo(s"getOffsets [$groupId,${offsetMap.mkString(",")}] ")
+    // fix bug
+    // 如果GroupId 已经在Hbase存在了，这个时候新加一个topic ，则新加的Topic 不会被消费
+    val offsetMaps = reset.toLowerCase() match {
+      case "largest" => getLatestOffsets(topics.toSeq) ++ offsetMap
+      case _ => getEarliestOffsets(topics.toSeq) ++ offsetMap
+    }
 
-    offsetMap.toMap
+    logInfo(s"getOffsets [$groupId,${offsetMaps.mkString(",")}] ")
+
+    offsetMaps
   }
 
   /**

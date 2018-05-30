@@ -15,16 +15,22 @@ import scala.collection.JavaConversions._
 private[kafka] class RedisOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
 
   override def getOffsets(groupId: String, topics: Set[String]): Map[TopicPartition, Long] = {
-    val offsets = safeClose {jedis =>
+    val offsetMap = safeClose { jedis =>
       topics.flatMap(topic => {
-        jedis.hgetAll(generateKey(groupId,topic)).map {
-          case (partition,offset) => new TopicPartition(topic,partition.toInt) -> offset.toLong
+        jedis.hgetAll(generateKey(groupId, topic)).map {
+          case (partition, offset) => new TopicPartition(topic, partition.toInt) -> offset.toLong
         }
       })
     }(connect(storeParams))
-    logInfo(s"getOffsets [$groupId,${offsets.mkString(",")}] ")
 
-    offsets.toMap
+    // fix bug
+    // 如果GroupId 已经在Hbase存在了，这个时候新加一个topic ，则新加的Topic 不会被消费
+    val offsetMaps = reset.toLowerCase() match {
+      case "largest" => getLatestOffsets(topics.toSeq) ++ offsetMap
+      case _ => getEarliestOffsets(topics.toSeq) ++ offsetMap
+    }
+    logInfo(s"getOffsets [$groupId,${offsetMaps.mkString(",")}] ")
+    offsetMaps
   }
 
 
