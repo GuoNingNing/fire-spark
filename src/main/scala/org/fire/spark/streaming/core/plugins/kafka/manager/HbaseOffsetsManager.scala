@@ -91,12 +91,13 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
 
         // 如果Offset失效了，则用 earliestOffsets 替代
         val tp = new TopicPartition(topic, partition)
-        earliestOffsets.get(tp) match {
+        val finalOffset = earliestOffsets.get(tp) match {
           case Some(left) if left > offset =>
             logWarning(s"consumer group:$groupId,topic:${tp.topic},partition:${tp.partition} offsets已经过时，更新为: $left")
-            storedOffsetMap += tp -> left
-          case _ => storedOffsetMap += tp -> offset
+            left
+          case _ => offset
         }
+        storedOffsetMap += tp -> finalOffset
       })
       rs.close()
     }

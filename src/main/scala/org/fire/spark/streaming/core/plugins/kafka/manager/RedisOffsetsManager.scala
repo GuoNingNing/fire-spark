@@ -15,10 +15,24 @@ import scala.collection.JavaConversions._
 private[kafka] class RedisOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
 
   override def getOffsets(groupId: String, topics: Set[String]): Map[TopicPartition, Long] = {
+
+    val earliestOffsets = getEarliestOffsets(topics.toSeq)
+
+
     val offsetMap = safeClose { jedis =>
       topics.flatMap(topic => {
         jedis.hgetAll(generateKey(groupId, topic)).map {
-          case (partition, offset) => new TopicPartition(topic, partition.toInt) -> offset.toLong
+          case (partition, offset) =>
+            // 如果Offset失效了，则用 earliestOffsets 替代
+            val tp = new TopicPartition(topic, partition.toInt)
+
+            val finalOffset = earliestOffsets.get(tp) match {
+              case Some(left) if left > offset.toLong =>
+                logWarning(s"consumer group:$groupId,topic:${tp.topic},partition:${tp.partition} offsets已经过时，更新为: $left")
+                left
+              case _ => offset.toLong
+            }
+            tp -> finalOffset
         }
       })
     }(connect(storeParams))
