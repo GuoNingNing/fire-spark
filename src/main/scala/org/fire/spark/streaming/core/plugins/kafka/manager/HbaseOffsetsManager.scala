@@ -64,7 +64,9 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
     * @return
     */
   override def getOffsets(groupId: String, topics: Set[String]): Map[TopicPartition, Long] = {
-    val offsetMap = new mutable.HashMap[TopicPartition, Long]()
+    val storedOffsetMap = new mutable.HashMap[TopicPartition, Long]()
+
+    val earliestOffsets = getEarliestOffsets(topics.toSeq)
 
     for (topic <- topics) {
       val key = generateKey(groupId, topic)
@@ -86,7 +88,15 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
             case other =>
           }
         })
-        offsetMap += new TopicPartition(topic, partition) -> offset
+
+        // 如果Offset失效了，则用 earliestOffsets 替代
+        val tp = new TopicPartition(topic, partition)
+        earliestOffsets.get(tp) match {
+          case Some(left) if left > offset =>
+            logWarning(s"consumer group:$groupId,topic:${tp.topic},partition:${tp.partition} offsets已经过时，更新为: $left")
+            storedOffsetMap += tp -> left
+          case _ => storedOffsetMap += tp -> offset
+        }
       })
       rs.close()
     }
@@ -94,8 +104,8 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
     // fix bug
     // 如果GroupId 已经在Hbase存在了，这个时候新加一个topic ，则新加的Topic 不会被消费
     val offsetMaps = reset.toLowerCase() match {
-      case "largest" => getLatestOffsets(topics.toSeq) ++ offsetMap
-      case _ => getEarliestOffsets(topics.toSeq) ++ offsetMap
+      case "largest" => getLatestOffsets(topics.toSeq) ++ storedOffsetMap
+      case _ => getEarliestOffsets(topics.toSeq) ++ storedOffsetMap
     }
 
     logInfo(s"getOffsets [$groupId,${offsetMaps.mkString(",")}] ")
