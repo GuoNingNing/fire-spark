@@ -43,4 +43,8 @@ class AliyMNSSource(@transient val ssc: StreamingContext,
     mm.createMNSStream(ssc, param, numPartitions).map(f)
   }
 
+  def getMNSReceiverDStream[R: ClassTag](f: SourceType => R): DStream[R] = {
+    mm.createMNSReceiverStream(ssc, param, numPartitions).map(f)
+  }
+
 }
