@@ -3,6 +3,7 @@ package org.fire.spark.streaming.core.sources
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+import org.fire.spark.streaming.core.Logging
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.meta.getter
@@ -15,8 +16,8 @@ import scala.util.Try
   *
   * 源
   */
-trait Source extends Serializable {
-  lazy val logger: Logger = LoggerFactory.getLogger(getClass)
+trait Source extends Logging with Serializable {
+  //  lazy val logger: Logger = LoggerFactory.getLogger(getClass)
 
   @(transient@getter)
   val ssc: StreamingContext

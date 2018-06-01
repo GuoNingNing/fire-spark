@@ -1,17 +1,13 @@
 package org.fire.spark.streaming.core.plugins.aliymns.manager
 
-import com.aliyun.mns.client.{CloudAccount, CloudQueue, MNSClient}
 import com.aliyun.mns.model.Message
 import org.apache.spark.internal.Logging
-import org.apache.spark.{Partition, SparkContext, TaskContext}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.{Partition, SparkContext, TaskContext}
 import org.fire.spark.streaming.core.plugins.aliymns.AliyMNSClientSingleton
 
 import scala.annotation.meta.getter
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
-import scala.reflect.ClassTag
-import scala.util.Try
 
 /**
   * Created by guoning on 2018/5/31.

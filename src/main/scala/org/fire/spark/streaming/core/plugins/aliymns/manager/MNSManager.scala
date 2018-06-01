@@ -9,9 +9,10 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.aliymns.manager.MNSDStream
 import org.apache.spark.streaming.dstream.InputDStream
 import org.fire.spark.streaming.core.Logging
+import org.fire.spark.streaming.core.plugins.aliymns.AliyMNSClientSingleton
 
 import scala.reflect.ClassTag
-import scala.collection.JavaConverters._
+import scala.collection.JavaConversions._
 
 /**
   * Created by guoning on 2018/5/31.
@@ -20,6 +21,11 @@ import scala.collection.JavaConverters._
   */
 class MNSManager(val sparkConf: SparkConf) extends Logging with Serializable {
 
+  private var client: MNSClient = _
+
+  private var queueName: String = _
+
+  private lazy val queue = client.getQueueRef(queueName)
 
   def createMNSStream(ssc: StreamingContext,
                       param: Map[String, String],
@@ -36,8 +42,19 @@ class MNSManager(val sparkConf: SparkConf) extends Logging with Serializable {
                               storageLevel: StorageLevel = StorageLevel.MEMORY_ONLY
                              ): InputDStream[Message] = {
 
+    client = AliyMNSClientSingleton.connect(param)
 
+    queueName = param("queue.name")
     new MNSReceiverDStream(ssc, param, numPartitions, storageLevel)
+  }
+
+  def updateOffsets(offset: Array[String]): Unit = {
+
+    if (offset.nonEmpty) {
+      val (a, b) = offset.splitAt(10)
+      queue.batchDeleteMessage(a.toList)
+      updateOffsets(b)
+    }
   }
 
 

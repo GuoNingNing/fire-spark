@@ -18,9 +18,11 @@ object ReadMDSDemo extends FireStreaming {
 
     val source = new AliyMNSSource(ssc)
 
-    val logs = source.getDStream[String](_.getMessageBody)
+    val logs = source.getMNSReceiverDStream[String](_.getMessageBodyAsRawString)
 
-    logs.print()
-
+    logs.foreachRDD((rdd, time) => {
+      rdd.take(10).foreach(println)
+      source.updateOffsets(time.milliseconds)
+    })
   }
 }

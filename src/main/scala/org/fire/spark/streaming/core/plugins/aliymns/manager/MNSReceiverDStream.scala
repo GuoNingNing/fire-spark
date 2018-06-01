@@ -69,7 +69,7 @@ private[this] class MNSReceiver(param: Map[String, String],
 
   private class MessageHandler(index: Int) extends Runnable {
     def run() {
-      val queue = AliyMNSClientSingleton.connect(param).getQueueRef(queueName)
+      val queue = client.getQueueRef(queueName)
       try {
         while (!isStopped) {
           val msg = queue.popMessage(wait_time)
