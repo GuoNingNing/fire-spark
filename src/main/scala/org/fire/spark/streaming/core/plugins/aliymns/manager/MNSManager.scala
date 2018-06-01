@@ -49,13 +49,11 @@ class MNSManager(val sparkConf: SparkConf) extends Logging with Serializable {
   }
 
   def updateOffsets(offset: Array[String]): Unit = {
-
-    queue.batchDeleteMessage(offset.toList)
-//    if (offset.nonEmpty) {
-//      val (a, b) = offset.splitAt(10)
-//      queue.batchDeleteMessage(a.toList)
-//      updateOffsets(b)
-//    }
+    if (offset.nonEmpty) {
+      val (a, b) = offset.splitAt(10)
+      queue.batchDeleteMessage(a.toList)
+      updateOffsets(b)
+    }
   }
 
 
