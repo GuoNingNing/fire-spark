@@ -21,8 +21,6 @@ class MNSDStream(ssc: StreamingContext,
                  numPartitions: Int) extends InputDStream[Message](ssc) with Logging {
 
 
-
-
   override def start(): Unit = {}
 
   override def stop(): Unit = {}
@@ -31,7 +29,7 @@ class MNSDStream(ssc: StreamingContext,
 
     val rdd = new MNSRDD(ssc.sparkContext, param, numPartitions)
 
-    val metadata = Map(StreamInputInfo.METADATA_KEY_DESCRIPTION -> "拉去MNS数据")
+    val metadata = Map(StreamInputInfo.METADATA_KEY_DESCRIPTION -> "Pull the MNS data ...")
     val inputInfo = StreamInputInfo(id, rdd.count, metadata)
     ssc.scheduler.inputInfoTracker.reportInfo(validTime, inputInfo)
 

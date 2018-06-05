@@ -31,7 +31,7 @@ private[this] class MNSReceiver(param: Map[String, String],
                                 numPartitions: Int,
                                 storageLevel: StorageLevel) extends Receiver[Message](storageLevel) with Logging {
 
-  logInfo(s"create new MNSReceiver with param ${param}")
+  logInfo(s"create new MNSReceiver with param $param")
 
   private var client: MNSClient = _
   private lazy val queueName = param("queue.name")
@@ -69,8 +69,8 @@ private[this] class MNSReceiver(param: Map[String, String],
 
   private class MessageHandler(index: Int) extends Runnable {
     def run() {
-      val queue = client.getQueueRef(queueName)
       try {
+        val queue = client.getQueueRef(queueName)
         while (!isStopped) {
           val msg = queue.popMessage(wait_time)
           if (msg != null) {
@@ -78,8 +78,9 @@ private[this] class MNSReceiver(param: Map[String, String],
           }
         }
       } catch {
-        case NonFatal(e) =>
-          restart("Error receiving data", e)
+        case e: Throwable =>
+          e.printStackTrace()
+          restart("Error receiving data ", e)
       } finally {
         onStop()
       }

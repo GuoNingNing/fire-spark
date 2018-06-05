@@ -18,32 +18,28 @@ import scala.collection.JavaConversions._
   */
 class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkContext,
                                           val initParams: Map[String, String] = Map.empty[String, String])
-  extends Sink[T]{
+  extends Sink[T] {
 
   override val paramPrefix: String = "spark.sink.hbase."
 
   private lazy val prop = {
     val p = new Properties()
-    p.putAll(param.map { case (k,v) => s"hbase.$k"->v } ++ initParams)
+    p.putAll(param.map { case (k, v) => s"hbase.$k" -> v } ++ initParams)
     p
   }
 
   private val tableName = prop.getProperty("hbase.table")
-  private val commitBatch = prop.getProperty("hbase.commit.batch","1000").toInt
-  private val bufferSize = prop.getProperty("hbase.commit.buffer",s"${5*1024*1024}").toLong
-  private val maxValueSize = prop.getProperty("hbase.max.value","1000").toInt
+  private val commitBatch = prop.getProperty("hbase.commit.batch", "1000").toInt
 
   private def getConnect: Connection = {
     val conf = HBaseConfiguration.create
-    prop.foreach {case (k,v) => conf.set(k,v)}
+    prop.foreach { case (k, v) => conf.set(k, v) }
     HbaseConnPool.connect(conf)
   }
 
   private def getMutator: BufferedMutator = {
     val connection = getConnect
     val bufferedMutatorParams = new BufferedMutatorParams(TableName.valueOf(tableName))
-    bufferedMutatorParams.writeBufferSize(bufferSize)
-    bufferedMutatorParams.maxKeyValueSize(maxValueSize)
     connection.getBufferedMutator(bufferedMutatorParams)
   }
 
@@ -54,7 +50,7 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
 
   /** 输出
     *
-    * @param rdd RDD[Put]或者RDD[Delete]
+    * @param rdd  RDD[Put]或者RDD[Delete]
     * @param time spark.streaming.Time
     */
   override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
@@ -71,13 +67,13 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
         val delList = new JAList[Delete]()
         delRDD.foreach { d =>
           delList += d.asInstanceOf[Delete]
-          if(delList.size() >= commitBatch){
-            table.batch(delList,null)
+          if (delList.size() >= commitBatch) {
+            table.batch(delList, null)
             delList.clear()
           }
         }
-        if(delList.size() > 0){
-          table.batch(delList,null)
+        if (delList.size() > 0) {
+          table.batch(delList, null)
           delList.clear()
         }
         table.close()
@@ -91,5 +87,6 @@ class HBaseSink[T <: Mutation : ClassTag](@transient override val sc: SparkConte
 
 object HBaseSink {
   def apply(sc: SparkContext) = new HBaseSink[Put](sc)
+
   def apply[T <: Mutation : ClassTag](rdd: RDD[T]) = new HBaseSink[T](rdd.sparkContext)
 }

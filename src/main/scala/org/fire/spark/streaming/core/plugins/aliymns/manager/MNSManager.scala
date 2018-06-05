@@ -1,6 +1,7 @@
 package org.fire.spark.streaming.core.plugins.aliymns.manager
 
 import com.aliyun.mns.client.{CloudAccount, CloudQueue, MNSClient}
+import com.aliyun.mns.common.{BatchDeleteException, ClientException, ServiceException}
 import com.aliyun.mns.model.Message
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.storage.StorageLevel
@@ -50,8 +51,21 @@ class MNSManager(val sparkConf: SparkConf) extends Logging with Serializable {
 
   def updateOffsets(offset: Array[String]): Unit = {
     if (offset.nonEmpty) {
-      val (a, b) = offset.splitAt(10)
-      queue.batchDeleteMessage(a.toList)
+      val (a, b) = offset.splitAt(15)
+      try {
+        queue.batchDeleteMessage(a.toList)
+      } catch {
+        case e: BatchDeleteException =>
+          logWarning(s"BatchDeleteMessage BatchDeleteException ${e.getErrorMessages}")
+          e.printStackTrace()
+        case e: ServiceException =>
+          logWarning(s"BatchDeleteMessage ServiceException ${e.getMessage}")
+          e.printStackTrace()
+        case e: ClientException =>
+          logWarning(s"BatchDeleteMessage ClientException ${e.getMessage}")
+          e.printStackTrace()
+
+      }
       updateOffsets(b)
     }
   }
