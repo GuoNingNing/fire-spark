@@ -138,4 +138,4 @@ test $# -eq 0 && {
 	echo -e "Usage Ex:\n\tbase $base/$0 kafka_2_hdfs.properties">&2;
 	exit;
 }
-main $1 $2
+main $1 $2 

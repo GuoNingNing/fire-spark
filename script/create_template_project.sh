@@ -64,7 +64,6 @@ create_module() {
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>README.md</include>
-                <include>../run.sh</include>
             </includes>
         </fileSet>
         <fileSet>
@@ -80,6 +79,12 @@ create_module() {
             </includes>
         </fileSet>
     </fileSets>
+	<files>
+		<file>
+			<source>../run.sh</source>
+            <outputDirectory>/</outputDirectory>
+		</file>
+	</files>
 </assembly>
 EOF
 
