@@ -30,6 +30,7 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
   private lazy val partitionBytes = Bytes.toBytes("partition")
   private lazy val offsetBytes = Bytes.toBytes("offset")
 
+  @transient
   private lazy val table: Table = {
 
     val conn = HbaseConnPool.connect(storeParams)

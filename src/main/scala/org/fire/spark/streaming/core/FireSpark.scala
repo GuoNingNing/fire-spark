@@ -36,11 +36,12 @@ trait FireSpark {
   /**
     * 添加sparkListener
     * 如使用此函数添加,则必须在 handle 函数之前调用此函数
+    *
     * @param listener
     * @deprecated 建议直接在配置文件中添加
     */
   @deprecated
-  def addSparkListeners(listener : String): Unit = sparkListeners += listener
+  def addSparkListeners(listener: String): Unit = sparkListeners += listener
 
   /**
     * 处理函数
@@ -52,6 +53,8 @@ trait FireSpark {
   def creatingContext(): SparkContext = {
     val sparkConf = new SparkConf()
 
+    sparkConf.set("spark.user.args", args.mkString("|"))
+
     // 约定传入此参数,则表示本地 Debug
     if (sparkConf.contains("spark.properties.file")) {
       sparkConf.setAll(Utils.getPropertiesFromFile(sparkConf.get("spark.properties.file")))
@@ -61,8 +64,8 @@ trait FireSpark {
 
     init(sparkConf)
 
-    val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners","")
-    if (extraListeners != "") sparkConf.set("spark.extraListeners",extraListeners)
+    val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
+    if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
 
     val sc = new SparkContext(sparkConf)
     handle(sc)

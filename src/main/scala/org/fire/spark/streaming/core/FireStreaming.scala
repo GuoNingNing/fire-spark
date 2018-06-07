@@ -5,6 +5,7 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.fire.spark.streaming.core.kit.Utils
 
+import scala.annotation.meta.getter
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -27,6 +28,9 @@ trait FireStreaming {
 
   // 从checkpoint 中恢复失败，则重新创建
   private var createOnError: Boolean = true
+
+  @(transient@getter)
+  var sparkSession: SparkSession = _
 
   /**
     * 初始化，函数，可以设置 sparkConf
@@ -72,6 +76,7 @@ trait FireStreaming {
 
     val sparkConf = new SparkConf()
 
+    sparkConf.set("spark.user.args", args.mkString("|"))
 
     // 约定传入此参数,则表示本地 Debug
     if (sparkConf.contains("spark.properties.file")) {
@@ -86,7 +91,7 @@ trait FireStreaming {
     if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
 
 
-    val sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
+    sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
     // 时间间隔
     val slide = sparkConf.get("spark.batch.duration").toInt
     val ssc = new StreamingContext(sparkSession.sparkContext, Seconds(slide))
