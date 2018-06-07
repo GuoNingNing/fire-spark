@@ -333,4 +333,4 @@ test $# -eq 0 && {
 	echo -e "Usage:\n\tbash $0 [procject_name]\nEx:\n\tbash $0 ~/code/test_project" >&2;
 	exit;
 }
-create_project "$@"
+create_project "$@" 
