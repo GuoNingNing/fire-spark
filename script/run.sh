@@ -30,7 +30,7 @@ function get_param(){
         local n=$2
         local d=$3
 
-	test ! -f $user_proper_file && { echo "Properties \$user_proper_file file not set">&2;exit; }
+	test ! -f $user_proper_file && { echo "Properties $user_proper_file file not set">&2;exit; }
         local v=$(grep "^$n=" $user_proper_file | head -1 | awk -F '=' '{s="";for(i=2;i<=NF;i++){if(s){s=s"="$i}else{s=$i}print s}}')
         test "x$v" == "x" && test "x$d" != "x" && v="$d"
         test "x$v" == "x" && { echo "$n not set">&2;exit; }
@@ -135,7 +135,7 @@ function main(){
 }
 
 test $# -eq 0 && { 
-	echo -e "Usage Ex:\n\tbase $base/$0 kafka_2_hdfs.properties">&2;
+	echo -e "Usage Ex:\n\tbash $base/$0 kafka_2_hdfs.properties">&2;
 	exit;
 }
 main $1 $2 
