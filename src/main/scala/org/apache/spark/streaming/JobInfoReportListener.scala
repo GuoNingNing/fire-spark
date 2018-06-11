@@ -25,9 +25,9 @@ class JobInfoReportListener(ssc: StreamingContext) extends StreamingListener wit
   private val batchInfos = new mutable.Queue[BatchInfo]()
 
   private val producerConf = new Properties()
-  producerConf.put("serializer.class", "kafka.serializer.DefaultEncoder")
-  producerConf.put("key.serializer.class", "kafka.serializer.StringEncoder")
-  producerConf.put("metadata.broker.list", ssc.conf.getOption("spark.monitor.kafka.metadata.broker.list").getOrElse(""))
+  producerConf.put("bootstrap.servers", ssc.conf.getOption("spark.monitor.kafka.bootstrap.servers").getOrElse(""))
+  producerConf.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+  producerConf.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
 
 
   private val sinkTopic = ssc.conf.getOption("spark.monitor.kafka.topic")
@@ -66,7 +66,7 @@ class JobInfoReportListener(ssc: StreamingContext) extends StreamingListener wit
         SparkAppInfo(name, master, batchDuration, appId, topic, time, numRecords, schedulingDelay, processingDelay, "completed")
     }
     if (sinkTopic.nonEmpty)
-      sparkAppInfos.writeToKafka(producerConf, x => new ProducerRecord[String, String](sinkTopic.get, UUID.randomUUID().toString, x.toString))
+      sparkAppInfos.toIterator.writeToKafka(producerConf, x => new ProducerRecord[String, String](sinkTopic.get, UUID.randomUUID().toString, x.toString))
 
   }
 
@@ -95,7 +95,7 @@ class JobInfoReportListener(ssc: StreamingContext) extends StreamingListener wit
         SparkAppInfo(name, master, batchDuration, appId, topic, time, numRecords, schedulingDelay, 0L, "started")
     }
     if (sinkTopic.nonEmpty)
-      sparkAppInfos.writeToKafka(producerConf, x => new ProducerRecord[String, String](sinkTopic.get, UUID.randomUUID().toString, x.toString))
+      sparkAppInfos.toIterator.writeToKafka(producerConf, x => new ProducerRecord[String, String](sinkTopic.get, UUID.randomUUID().toString, x.toString))
 
   }
 }
