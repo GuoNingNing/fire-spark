@@ -16,7 +16,7 @@ function check_cmd(){
 function get_abs_path(){
         local  f=$1
         test "x$f" == "x" && return
-        test ! -f "$f" && test ! -d "$f" && return
+        test ! -f "$f" && test ! -d "$f" && { echo $f;return; }
         local dir=$(cd $(dirname $f);pwd)
         echo "$dir/$(basename $f)"
 }
@@ -99,12 +99,12 @@ function set_default_lib(){
 }
 
 function set_conf_dir(){
-	if [ -f "$1" ];then
+	if [ -f "conf/$1" ];then
 		echo $1
-	elif [ -f "conf/$1" ];then
-		echo "conf/$1"
-	else
+	elif [ -f "conf/online/$1" ];then
 		echo "conf/online/$1"
+	else
+		echo "$1"
 	fi
 }
 
