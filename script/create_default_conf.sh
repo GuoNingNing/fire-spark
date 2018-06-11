@@ -48,7 +48,7 @@ function user_run_params(){
 	_p "必须设置,包含main class的jar包名称\njar文件必须包含在lib.path当中" "main.jar" " "
 	_p "提供给执行class的命令行参数,多个参数之间用逗号隔开,参数中不能包含空格等空白符\nEx:param1,param2,.." \
 	"self.params" " "
-	_p "用户代码依赖jar包的所在目录\n可以是绝对路径,也可以是相对此配置文件的相对路径,相对路径会自动补全" "lib.path" "lib"
+	_p "用户代码依赖jar包的所在目录\n可以是绝对路径,也可以是相对此配置文件的相对路径,相对路径会自动补全" "lib.path" " "
 }
 
 #spark任务提交需要的几个基础配置
