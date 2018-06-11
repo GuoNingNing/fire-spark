@@ -13,6 +13,13 @@ function check_cmd(){
 		echo 0
 	fi
 }
+function get_abs_path(){
+        local  f=$1
+        test "x$f" == "x" && return
+        test ! -f "$f" && test ! -d "$f" && return
+        local dir=$(cd $(dirname $f);pwd)
+        echo "$dir/$(basename $f)"
+}
 function check_env(){
         local var=$1
         local d=$2
@@ -30,7 +37,7 @@ function get_param(){
         local n=$2
         local d=$3
 
-	test ! -f $user_proper_file && { echo "Properties $user_proper_file file not set">&2;exit; }
+	test ! -f "$user_proper_file" && { echo "Properties $user_proper_file file not set">&2;exit; }
         local v=$(grep "^$n=" $user_proper_file | head -1 | awk -F '=' '{s="";for(i=2;i<=NF;i++){if(s){s=s"="$i}else{s=$i}print s}}')
         test "x$v" == "x" && test "x$d" != "x" && v="$d"
         test "x$v" == "x" && { echo "$n not set">&2;exit; }
@@ -72,40 +79,40 @@ function check_run(){
         exit;
     fi
 }
-function set_lib_path(){
+function set_abs_lib(){
         local p=$1
         local lp=$2
-        test ! -f "$p" && { echo "Config file $p not a document.">&2;exit; }
         test $(echo $p | grep -E '\.properties$' | wc -l) -eq 0 && { echo "$p the file needs to be of type properties">&2;exit; }
         local cap=$(cd $(dirname $p);pwd)
-        test "x${!lp:0:1}" != "x/" && eval "$lp=$cap/${!lp}"
+		test "x${!lp:0:1}" != "x/" && eval "$lp=$(get_abs_path $cap/${!lp})"
 }
-function check_proper(){
-	local p=$1
-	test "x$p" == "x" && return
-	test ! -f $p && return
-	local cap=$(cd $(dirname $p);pwd)
-	test "x$cap" == "x/" && cap=""
-	local bp=$(basename $p)
-	local ps=($(echo "$cap/$bp" | awk -F '/' '{for(i=1;i<=NF;i++){if(!$i){print "#"}else{print $i}}}'))
-	case ${ps[${#ps[@]}-2]} in
-		"conf")
-			echo "${cap%/*}/lib";;
-		*)
-			echo "$cap/lib";;
-	esac
+function set_default_lib(){
+	local p=$(basename $1)
+
+	if [ $(echo $1 | grep -E "conf/online/$p$" | wc -l) -ne 0 ];then
+		echo "../../lib";;
+	elif [ $(echo $1 | grep -E "conf/$p$" | wc -l) -ne 0 ];then
+		echo "../lib"
+	else
+		echo "lib";;
+	fi
 }
-function get_absolute_path(){
-        local  f=$1
-        test "x$f" == "x" && return
-        test ! -f "$f" && test ! -d "$f" && return
-        local dir=$(cd $(dirname $f);pwd)
-        echo "$dir/$(basename $f)"
+
+function set_conf_dir(){
+	if [ -f "$1" ];then
+		echo $1
+	elif [ -f "conf/$1" ];then
+		echo "conf/$1"
+	else
+		echo "conf/online/$1"
+	fi
 }
 
 function main(){
 	local proper=${1:-"$(basename $base).properties"}
-	proper=$(get_absolute_path $proper)
+	proper=$(set_conf_dir $proper)
+	test ! -f "$proper" && { echo "file $proper not found">&2;exit; }
+	proper=$(get_abs_path $proper)
 	user_proper_file=$proper
 
 	my_include
@@ -116,8 +123,8 @@ function main(){
 	get_param "main_jar" "spark.run.main.jar"
 	get_param "appname" "spark.app.name" "${main}.App"
 	get_param "self_param" "spark.run.self.params" "#"
-	get_param "lib_path" "spark.run.lib.path" $(check_proper $proper)
-	set_lib_path "$proper" "lib_path"
+	get_param "lib_path" "spark.run.lib.path" $(set_default_lib $proper)
+	set_abs_lib "$proper" "lib_path"
 	main_jar=$lib_path/$main_jar
 	test ! -f "$main_jar" && { echo "$main_jar file does not exist">&2;exit; }
 	test "x$self_param" != "x#" && self_params=($(echo $self_param | awk -F ',' '{for(i=1;i<=NF;i++){print $i}}'))
