@@ -100,7 +100,7 @@ function set_default_lib(){
 
 function set_conf_dir(){
 	if [ -f "conf/$1" ];then
-		echo $1
+		echo "conf/$1"
 	elif [ -f "conf/online/$1" ];then
 		echo "conf/online/$1"
 	else
