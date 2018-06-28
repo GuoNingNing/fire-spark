@@ -45,7 +45,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
       case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => Some(k.substring(paramPrefix.length) -> v)
       case _ => None
     } toMap
-  } ++ specialKafkaParams
+  } ++ specialKafkaParams ++ Map("enable.auto.commit" -> "false")
 
   private lazy val groupId = kafkaParams.get("group.id")
 
