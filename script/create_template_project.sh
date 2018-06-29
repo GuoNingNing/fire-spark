@@ -16,11 +16,35 @@ __exit__() {
 	test "x$1" == "x0x0F" && { echo "parameter error.">&2;exit; }
 }
 
+create_demo_code(){
+	local gourp_id=$1
+	local module=$2
+	local code_dir=$3
+
+cat > $code_dir/Demo.scala <<EOF
+package ${group_id}.$module
+
+import org.apache.spark.streaming.StreamingContext
+import org.fire.spark.streaming.core.FireStreaming
+import org.fire.spark.streaming.core.plugins.kafka.KafkaDirectSource
+
+object Demo extends FireStreaming {
+    override def handle(ssc : StreamingContext): Unit = {
+        val source = new KafkaDirectSource[String,String](ssc)
+        //val conf = ssc.sparkContext.getConf
+        source.getDStream[(String,String)](m => (m.topic,m.value)).foreachRDD((rdd,time) => {
+            rdd.take(10).foreach(println)
+            source.updateOffsets(time.milliseconds)
+        })
+    }
+}
+EOF
+}
 create_module() {
 	local module=$(__get__ "$1" "module name")
 	__exit__ "$module"
 	local src_dir=src/main/scala
-	local code_dir=$src_dir/${group_id//./\/}
+	local code_dir=$src_dir/${group_id//./\/}/$module
 	local deploy_dir=deploy
 	local conf_dir=$deploy_dir/conf/online
 
@@ -122,7 +146,7 @@ EOF
 </project>
 
 EOF
-
+create_demo_code $group_id $module $name/$module/$code_dir
 }
 
 create_pom() {
@@ -324,7 +348,7 @@ create_default_conf() {
 
 create_project() {
 	local name=$1
-	test "x$name" == "x" && read -p "Please enter number: " -t 30 name
+	test "x$name" == "x" && read -p "Please enter name: " -t 30 name
 	test "x$name" == "x" && { echo "The name of the project can not be empty" >&2;exit; }
 	mkdir -p $name
 	test ! -d $name && { echo "project create failed." >&2;exit; }
