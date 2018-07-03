@@ -64,7 +64,7 @@ function check_command(){
 function check_run(){
     local flag=$1
     check_command yarn
-	local appids=($(yarn application -list | awk -v app=$appname '{if($2==app){print $1}}'))
+    local appids=($(yarn application -list | grep $appname | awk '{print $1}'))
     test ${#appids[@]} -eq 0 && test "x$flag" != "x" && { echo "Spark app $appname already stop.">&2;exit; }
     if test ${#appids[@]} -ne 0;then
   	if [ "x$flag" != "x" ];then

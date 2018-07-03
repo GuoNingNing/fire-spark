@@ -79,7 +79,7 @@ object KafkaWriter {
   * }}}
   *
   */
-abstract class KafkaWriter[T: ClassTag]() {
+abstract class KafkaWriter[T: ClassTag]() extends Serializable {
 
   /**
     * To write data from a DStream to Kafka, call this function after creating the DStream. Once
