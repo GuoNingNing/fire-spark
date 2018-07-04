@@ -230,7 +230,7 @@ trait OffsetsManager extends Logging with Serializable {
 
   /**
     * 获取指定时间的Offset
-    *
+    *想
     * @param topics
     * @param time
     * @return

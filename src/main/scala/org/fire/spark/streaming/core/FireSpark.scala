@@ -1,8 +1,10 @@
 package org.fire.spark.streaming.core
 
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 import org.fire.spark.streaming.core.kit.Utils
 
+import scala.annotation.meta.getter
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -15,6 +17,9 @@ trait FireSpark {
   private final var _args: Array[String] = _
 
   private val sparkListeners = new ArrayBuffer[String]()
+
+  @(transient@getter)
+  var sparkSession: SparkSession = _
 
   /**
     * 初始化，函数，可以设置 sparkConf
@@ -67,7 +72,9 @@ trait FireSpark {
     val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
     if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
 
-    val sc = new SparkContext(sparkConf)
+    sparkSession = SparkSession.builder().enableHiveSupport().config(sparkConf).getOrCreate()
+
+    val sc = sparkSession.sparkContext
     handle(sc)
     sc
   }
