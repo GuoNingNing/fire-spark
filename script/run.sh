@@ -140,7 +140,7 @@ function main(){
 
 	get_param "ding_token" "spark.run.alert.ding.api" "#"
 	get_param "ding_contacts" "spark.run.alert.ding.contacts" "#"
-	get_param "ding_context" "spark.run.alert.ding.context" "$appname 任务已经开始提交"
+	get_param "ding_context" "spark.run.alert.ding.context" "任务已经开始提交"
 
 	set_abs_lib "$proper" "lib_path"
 	main_jar=$lib_path/$main_jar
