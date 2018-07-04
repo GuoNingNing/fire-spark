@@ -38,10 +38,10 @@ function get_param(){
         local d=$3
 
 	test ! -f "$user_proper_file" && { echo "Properties $user_proper_file file not set">&2;exit; }
-        local v=$(grep "^$n=" $user_proper_file | head -1 | awk -F '=' '{s="";for(i=2;i<=NF;i++){if(s){s=s"="$i}else{s=$i}print s}}')
+        local v=$(grep "^$n=" $user_proper_file | head -1 | awk -F '=' '{s="";for(i=2;i<=NF;i++){if(s){s=s"="$i}else{s=$i}};print s}')
         test "x$v" == "x" && test "x$d" != "x" && v="$d"
         test "x$v" == "x" && { echo "$n not set">&2;exit; }
-        eval "$var=$v"
+        eval "$var=\"$v\""
 }
 function set_jars(){
 	local jar=""
@@ -65,12 +65,14 @@ function send_ding(){
 	local token=$1
 	local contacts=$2
 	local context=${3:-"任务已开始提交"}
-	(test "x$token" == "x" || "x$token" == "x#") && return
-	(test "x$contacts" == "x" || "x$contacts" == "x#") && return
+	(test "x$token" == "x" || test "x$token" == "x#") && return
+	(test "x$contacts" == "x" || test "x$contacts" == "x#") && return
 	contacts=$(echo "$contacts" | awk -F ',' '{for(i=1;i<=NF;i++){if(a){a=a",\""$i"\""}else{a="\""$i"\""}};print a}')
-	local data='{"msgtype":"text","text":{"content":"'$context'"},"at":{"atMobiles":['$contacts'],"isAtAll":false}}"'
+	local url=$(echo $token | awk '/^https?:\/\//{print $0}')
+	local data='{"msgtype":"text","text":{"content":"'$context'"},"at":{"atMobiles":['$contacts'],"isAtAll":false}}'
 	check_command curl
-	curl -s "https://oapi.dingtalk.com/robot/send?access_token=$token" -H 'Content-Type: application/json' -d "$data"
+	curl -s ${url:-"https://oapi.dingtalk.com/robot/send?access_token=$token"} -H 'Content-Type: application/json' -d "$data"
+	echo
 }
 function check_run(){
     local flag=$1
@@ -136,7 +138,7 @@ function main(){
 	get_param "self_param" "spark.run.self.params" "#"
 	get_param "lib_path" "spark.run.lib.path" $(set_default_lib $proper)
 
-	get_param "ding_token" "spark.run.alert.ding.token" "#"
+	get_param "ding_token" "spark.run.alert.ding.api" "#"
 	get_param "ding_contacts" "spark.run.alert.ding.contacts" "#"
 	get_param "ding_context" "spark.run.alert.ding.context" "$appname 任务已经开始提交"
 
@@ -154,7 +156,7 @@ function main(){
 
 	test $(check_cmd "spark2-submit") -eq 1 && spark_submit=spark2-submit
 	check_command spark-submit
-	send_ding $ding_token "$ding_contacts" "$ding_context"
+	send_ding "$ding_token" "$ding_contacts" "$appname $ding_context"
 	spark-submit $main_parameter
 }
 
