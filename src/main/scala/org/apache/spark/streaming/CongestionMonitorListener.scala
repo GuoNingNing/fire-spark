@@ -80,7 +80,7 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
              |$name 自杀了~~~~(>_<)~~~~
              |自杀时间:$time
              |App  Id:$appId
-             |执行频度:$batchDuration
+             |执行频度:${batchDuration}ms
              |拥堵情况:$counter
              |拥堵数据:${batchInfos.map(_.numRecords).sum}
         """.stripMargin
@@ -112,7 +112,7 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
              |$name 拥堵告警
              |告警时间:$time
              |App  Id:$appId
-             |执行频度:$batchDuration
+             |执行频度:${batchDuration}ms
              |拥堵情况:$counter
              |拥堵数据:${batchInfos.map(_.numRecords).sum}
              |调度延时:$schedulingDelay
