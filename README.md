@@ -7,7 +7,7 @@
 #### 1.构建方法
 
 ```
-    $git clone https://github.com/GuoNingNing/fire-spark.git
+    $git clone -b 2.1.0_kafka-0.8 https://github.com/GuoNingNing/fire-spark.git
     $cd fire-spark
     $mvn clean install
 
@@ -17,7 +17,7 @@
     <dependency>
         <groupId>org.fire.spark.streaming</groupId>
     	<artifactId>fire-spark</artifactId>
-    	<version>2.2.0_kafka-0.10</version>
+    	<version>2.1.0_kafka-0.8</version>
     </dependency>
 ```
 
