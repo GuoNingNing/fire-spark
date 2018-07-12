@@ -5,8 +5,11 @@ import java.util.Properties
 
 import org.apache.spark.SparkException
 
-import scala.collection.Map
 import scala.collection.JavaConverters._
+import scala.collection.Map
+
+import scalaj.http._
+
 
 /**
   * Created by guoning on 2017/5/19.
@@ -32,5 +35,28 @@ object Utils {
     } finally {
       inReader.close()
     }
+  }
+
+  def classForName(className: String): Class[_] = {
+    Class.forName(className, true, Thread.currentThread().getContextClassLoader)
+  }
+
+  def httpPost(url : String,data : String,headers : Map[String,String] = Map.empty[String,String]): (Int,String) ={
+    var req = Http(url).postData(data)
+    headers.foreach {case (k,v) => req=req.header(k,v)}
+    val res = req.asString
+    (res.code,res.body)
+  }
+
+  def httpGet(url : String,param : Seq[(String,String)] = Seq.empty[(String,String)]) : (Int,String) = {
+    val req = Http(url).params(param)
+    val res = req.asString
+    (res.code,res.body)
+  }
+
+
+  def main(args: Array[String]): Unit = {
+
+    println(Utils.httpGet("http://bigdata-dev:9200/app/heartbeat/application_1526125629402_7874/15000",Seq.empty[(String,String)]))
   }
 }

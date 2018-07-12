@@ -12,8 +12,9 @@
     <properties>
         <spark.version>2.1.0</spark.version>
         <hadoop.version>2.6.0</hadoop.version>
+        <hbase.version>1.2.0</hbase.version>
 
-        <scala.version>2.10.5</scala.version>
+        <scala.version>2.11.8</scala.version>
         <lzo-hadoop.version>1.0.5</lzo-hadoop.version>
         <scala.binary.version>2.11</scala.binary.version>
         <zkclient.version>0.8</zkclient.version>
@@ -23,7 +24,7 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <project.build.jdk>1.7</project.build.jdk>
+        <project.build.jdk>1.8</project.build.jdk>
 
         <PermGen>64m</PermGen>
         <MaxPermGen>512m</MaxPermGen>
@@ -91,9 +92,24 @@
         </dependency>
         <!--lzo-hadoop-->
         <dependency>
-            <groupId>org.anarres.lzo</groupId>
-            <artifactId>lzo-hadoop</artifactId>
-            <version>${lzo-hadoop.version}</version>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-common</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-hadoop2-compat</artifactId>
+            <version>${hbase.version}</version>
         </dependency>
         <!--Redis 依赖-->
         <dependency>
@@ -126,6 +142,20 @@
             <artifactId>jetty-servlet</artifactId>
             <version>9.3.6.v20151106</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-http_${scala.binary.version}</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5</version>
+        </dependency>
+
+
     </dependencies>
 
 
@@ -155,6 +185,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <skip>true</skip>
                     <scalaVersion>${scala.version}</scalaVersion>
                 </configuration>
             </plugin>
@@ -163,33 +194,21 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.5.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18</version>
                 <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <descriptors>
-                        <descriptor>assembly.xml</descriptor>
-                    </descriptors>
+                    <skip>true</skip>
+                    <skipTests>true</skipTests>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
-                        <phase>package</phase> <!-- bind to the packaging phase -->
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
-
         </plugins>
     </build>
-
 
 </project>
