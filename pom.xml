@@ -13,6 +13,8 @@
         <spark.version>2.1.0</spark.version>
         <hadoop.version>2.6.0</hadoop.version>
         <hbase.version>1.2.0</hbase.version>
+        <spark.kafka.api.version>0-8</spark.kafka.api.version>
+
 
         <scala.version>2.11.8</scala.version>
         <lzo-hadoop.version>1.0.5</lzo-hadoop.version>
@@ -63,7 +65,7 @@
         <!--Spark kafka 核心jar-->
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-streaming-kafka-0-8_${scala.binary.version}</artifactId>
+            <artifactId>spark-streaming-kafka-${spark.kafka.api.version}_${scala.binary.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
         <!--Spark hive-->
