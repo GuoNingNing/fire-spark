@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 base=$(cd $(dirname $0);pwd)
-
+package=mytest
 
 __cmd__() {
 	if which ${1:-"cmd"} >/dev/null 2>&1;then echo 1;else echo 0;fi
@@ -22,19 +22,19 @@ create_demo_code(){
 	local code_dir=$3
 
 cat > $code_dir/Demo.scala <<EOF
-package ${group_id}.$module
-
+package ${group_id}.$package
+import kafka.serializer.StringDecoder
 import org.apache.spark.streaming.StreamingContext
 import org.fire.spark.streaming.core.FireStreaming
-import org.fire.spark.streaming.core.plugins.kafka.KafkaDirectSource
+import org.fire.spark.streaming.core.sources.KafkaDirectSource
 
 object Demo extends FireStreaming {
     override def handle(ssc : StreamingContext): Unit = {
-        val source = new KafkaDirectSource[String,String](ssc)
+        val source = new KafkaDirectSource[String, String, StringDecoder, StringDecoder](ssc)
         //val conf = ssc.sparkContext.getConf
-        source.getDStream[(String,String)](m => (m.topic,m.value)).foreachRDD((rdd,time) => {
+        source.getDStream[(String,String)](m => (m.topic,m.message())).foreachRDD((rdd,time) => {
             rdd.take(10).foreach(println)
-            source.updateOffsets(time.milliseconds)
+            source.updateZKOffsets(time.milliseconds)
         })
     }
 }
@@ -44,7 +44,7 @@ create_module() {
 	local module=$(__get__ "$1" "module name")
 	__exit__ "$module"
 	local src_dir=src/main/scala
-	local code_dir=$src_dir/${group_id//./\/}/$module
+	local code_dir=$src_dir/${group_id//./\/}/$package
 	local deploy_dir=deploy
 	local conf_dir=$deploy_dir/conf/online
 
@@ -124,17 +124,13 @@ EOF
 		<relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
     <artifactId>$module</artifactId>
-
     <dependencies>
         <dependency>
             <groupId>org.fire.spark.streaming</groupId>
             <artifactId>fire-spark</artifactId>
         </dependency>
     </dependencies>
-
-
     <build>
         <plugins>
             <plugin>
@@ -142,9 +138,7 @@ EOF
             </plugin>
         </plugins>
     </build>
-
 </project>
-
 EOF
 create_demo_code $group_id $module $name/$module/$code_dir
 }
@@ -160,18 +154,15 @@ create_pom() {
 	__exit__ "$version"
 
 cat > $name/pom.xml <<EOF
-
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>$group_id</groupId>
     <artifactId>$artifact_id</artifactId>
     <packaging>pom</packaging>
     <version>$version</version>
-
     <profiles>
         <profile>
             <!--
@@ -209,41 +200,31 @@ cat > $name/pom.xml <<EOF
     <modules>
         <module>$module</module>
     </modules>
-
     <!-- 定义统一版本号-->
     <properties>
-        <fire.spark.version>2.2.0_kafka-0.10</fire.spark.version>
-
-        <spark.version>2.2.0</spark.version>
+        <fire.spark.version>2.1.0_kafka-0.8</fire.spark.version>
+        <spark.version>2.1.0</spark.version>
         <hadoop.version>2.6.0</hadoop.version>
         <hbase.version>1.2.0-cdh5.12.1</hbase.version>
         <hive.version>1.1.0-cdh5.12.1</hive.version>
-
-        <scala.version>2.11.12</scala.version>
+        <scala.version>2.11.8</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
         <redis.version>2.8.2</redis.version>
         <mysql.version>5.1.6</mysql.version>
         <kafka.version>0.10.2.0</kafka.version>
         <es.version>5.6.3</es.version>
         <protobuf.version>2.5.0</protobuf.version>
-
         <log4j.version>1.7.25</log4j.version>
         <json4s.version>3.2.10</json4s.version>
         <spray.version>1.3.3</spray.version>
         <akka.version>2.3.9</akka.version>
-
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <project.build.jdk>1.8</project.build.jdk>
-
-
         <PermGen>64m</PermGen>
         <MaxPermGen>512m</MaxPermGen>
         <CodeCacheSize>512m</CodeCacheSize>
-
     </properties>
-
-
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -253,17 +234,13 @@ cat > $name/pom.xml <<EOF
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
-
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
             </resource>
         </resources>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -274,7 +251,6 @@ cat > $name/pom.xml <<EOF
                     <target>\${project.build.jdk}</target>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
@@ -302,7 +278,6 @@ cat > $name/pom.xml <<EOF
                 </configuration>
             </plugin>
         </plugins>
-
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -327,9 +302,7 @@ cat > $name/pom.xml <<EOF
             </plugins>
         </pluginManagement>
     </build>
-
 </project>
-
 EOF
 	create_module "$module"
 }

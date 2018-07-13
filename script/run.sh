@@ -157,7 +157,7 @@ function main(){
 	test $(check_cmd "spark2-submit") -eq 1 && spark_submit=spark2-submit
 	check_command spark-submit
 	send_ding "$ding_token" "$ding_contacts" "$appname $ding_context"
-	spark-submit $main_parameter
+	sudo -u hdfs $spark_submit $main_parameter
 }
 
 test $# -eq 0 && { 
