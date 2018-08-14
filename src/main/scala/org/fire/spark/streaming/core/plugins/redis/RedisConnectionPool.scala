@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.exceptions.JedisConnectionException
-import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, Pipeline}
+import redis.clients.jedis._
 
 import scala.annotation.meta.getter
 import scala.collection.JavaConversions._
@@ -19,6 +19,10 @@ object RedisConnectionPool {
   private lazy val pools: ConcurrentHashMap[RedisEndpoint, JedisPool] =
     new ConcurrentHashMap[RedisEndpoint, JedisPool]()
 
+  @transient
+  @getter
+  private lazy val clusters: ConcurrentHashMap[RedisEndpoint, JedisCluster] =
+    new ConcurrentHashMap[RedisEndpoint, JedisCluster]()
 
   /**
     * 创建一个Redis连接池
@@ -94,8 +98,13 @@ object RedisConnectionPool {
     * @return
     */
   def createJedisPool(re: RedisEndpoint): JedisPool = {
-
     println(s"createJedisPool with $re ")
+    new JedisPool(poolConfig, re.host, re.port, re.timeout, re.auth, re.dbNum)
+
+  }
+
+  private lazy val poolConfig = {
+
     val poolConfig: JedisPoolConfig = new JedisPoolConfig()
     /*最大连接数*/
     poolConfig.setMaxTotal(1000)
@@ -111,14 +120,40 @@ object RedisConnectionPool {
     /*逐出扫描的时间间隔(毫秒) 如果为负数,则不运行逐出线程, 默认-1*/
     poolConfig.setTimeBetweenEvictionRunsMillis(30000)
     poolConfig.setNumTestsPerEvictionRun(-1)
-    new JedisPool(poolConfig, re.host, re.port, re.timeout, re.auth, re.dbNum)
-
+    poolConfig
   }
+
+  def connectForCluster(res: RedisEndpoint*): JedisCluster = {
+
+    assert(res.nonEmpty, "The RedisEndpoint array is empty!!!")
+
+    val head = res.head
+
+    val cluster = clusters.getOrElseUpdate(head, {
+      val haps = res.map(r => new HostAndPort(r.host, r.port)).toSet
+
+      new JedisCluster(haps, head.timeout, 1000, 1, head.auth, poolConfig)
+    })
+
+    cluster
+  }
+
 
   def safeClose[R](f: Jedis => R)(implicit jedis: Jedis): R = {
     val result = f(jedis)
     Try {
       jedis.close()
+    } match {
+      case Success(o) => logger.debug("jedis.close successful.")
+      case Failure(o) => logger.error("jedis.close failed.")
+    }
+    result
+  }
+
+  def safeCloseCluster[R](f: JedisCluster => R)(implicit cluster: JedisCluster): R = {
+    val result = f(cluster)
+    Try {
+      cluster.close()
     } match {
       case Success(o) => logger.debug("jedis.close successful.")
       case Failure(o) => logger.error("jedis.close failed.")
@@ -141,5 +176,12 @@ object RedisConnectionPool {
   }
 
   def close(): Unit = pools.foreach { case (k, v) => v.close() }
+
+
+  def main(args: Array[String]): Unit = {
+    val redis = connectForCluster(new RedisEndpoint("172.17.191.209",6379,"ef4efab16ff00fd0e0e6f7fe1814ccbb"))
+
+    println(redis.dbSize())
+  }
 
 }

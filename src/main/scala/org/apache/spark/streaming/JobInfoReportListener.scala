@@ -9,7 +9,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark.streaming.kafka010.OffsetRange
 import org.fire.spark.streaming.core.plugins.kafka.writer.KafkaWriter._
 import org.apache.spark.streaming.scheduler.{BatchInfo, StreamingListener, StreamingListenerBatchCompleted, StreamingListenerBatchStarted}
-import org.fire.spark.streaming.core.FireConfig
+import org.fire.spark.streaming.core.{FireConfig, Logging}
 
 import scala.collection.mutable
 
@@ -19,7 +19,7 @@ import scala.collection.mutable
   *
   * 上报Job批次处理信息
   */
-class JobInfoReportListener(ssc: StreamingContext) extends StreamingListener with FireConfig {
+class JobInfoReportListener(ssc: StreamingContext) extends StreamingListener with FireConfig with Logging {
 
   // Queue containing latest completed batches
   private val batchInfos = new mutable.Queue[BatchInfo]()

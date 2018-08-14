@@ -188,21 +188,22 @@ trait OffsetsManager extends Logging with Serializable {
   def generateKey(groupId: String, topic: String): String = s"$groupId#$topic"
 
 
-  def getLeaders(topics: Seq[String]): Map[String, Seq[TopicPartition]] = {
+  def getLeaders(topics: Seq[String]): Map[(String,Int), Seq[TopicPartition]] = {
     val consumer = new SimpleConsumer(host, port, 100000, 64 * 1024, s"leaderLookup-${System.currentTimeMillis()}")
     val req = new TopicMetadataRequest(topics, 0)
     val resp = consumer.send(req)
 
-    val leaderAndTopicPartition = new mutable.HashMap[String, Seq[TopicPartition]]()
+    val leaderAndTopicPartition = new mutable.HashMap[(String,Int), Seq[TopicPartition]]()
 
     resp.topicsMetadata.foreach((metadata: TopicMetadata) => {
       val topic = metadata.topic
       metadata.partitionsMetadata.foreach((partition: PartitionMetadata) => {
         partition.leader match {
           case Some(endPoint) =>
-            leaderAndTopicPartition.get(endPoint.host) match {
-              case Some(taps) => leaderAndTopicPartition.put(endPoint.host, taps :+ new TopicPartition(topic, partition.partitionId))
-              case None => leaderAndTopicPartition.put(endPoint.host, Seq(new TopicPartition(topic, partition.partitionId)))
+            val hp = Tuple2(endPoint.host,endPoint.port)
+            leaderAndTopicPartition.get(hp) match {
+              case Some(taps) => leaderAndTopicPartition.put(hp, taps :+ new TopicPartition(topic, partition.partitionId))
+              case None => leaderAndTopicPartition.put(hp, Seq(new TopicPartition(topic, partition.partitionId)))
             }
           case None => throw new SparkException(s"get topic[$topic] partition[${partition.partitionId}] leader failed")
         }
@@ -230,7 +231,8 @@ trait OffsetsManager extends Logging with Serializable {
 
   /**
     * 获取指定时间的Offset
-    *想
+    * 想
+    *
     * @param topics
     * @param time
     * @return
@@ -240,8 +242,8 @@ trait OffsetsManager extends Logging with Serializable {
     val offsetMap = new mutable.HashMap[TopicPartition, Long]()
 
     leaders.foreach {
-      case (leaderHost, taps) =>
-        val consumer = new SimpleConsumer(leaderHost, port, 100000, 64 * 1024, s"offsetLookup-${System.currentTimeMillis()}")
+      case ((leaderHost,_port), taps) =>
+        val consumer = new SimpleConsumer(leaderHost, _port, 100000, 64 * 1024, s"offsetLookup-${System.currentTimeMillis()}")
 
         val requestInfo = taps.map(x => TopicAndPartition(x.topic(), x.partition()) -> PartitionOffsetRequestInfo(time, 1)).toMap
 
@@ -250,6 +252,7 @@ trait OffsetsManager extends Logging with Serializable {
         val offsetResponse = consumer.getOffsetsBefore(offsetRequest)
 
         if (offsetResponse.hasError) {
+          println(s"get topic offset failed offsetResponse $offsetResponse")
           throw new SparkException(s"get topic offset failed $leaderHost $taps")
         }
         offsetResponse.offsetsGroupedByTopic.values.foreach(partitionToResponse => {

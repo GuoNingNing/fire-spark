@@ -40,6 +40,13 @@ trait FireStreaming {
   def init(sparkConf: SparkConf): Unit = {}
 
   /**
+    * StreamingContext 运行之前执行
+    *
+    * @param ssc
+    */
+  def beforeStarted(ssc: StreamingContext): Unit = {}
+
+  /**
     * StreamingContext 运行之后执行
     */
   def afterStarted(ssc: StreamingContext): Unit = {}
@@ -91,12 +98,11 @@ trait FireStreaming {
     if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
 
 
-    sparkSession = SparkSession.builder().config(sparkConf).enableHiveSupport().getOrCreate()
+    sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
 
     // 时间间隔
     val slide = sparkConf.get("spark.batch.duration").toInt
     val ssc = new StreamingContext(sparkSession.sparkContext, Seconds(slide))
-
     handle(ssc)
     ssc
   }
@@ -145,7 +151,7 @@ trait FireStreaming {
         ssc.checkpoint(ck)
         ssc
     }
-
+    beforeStarted(context)
     context.start()
     afterStarted(context)
     context.awaitTermination()
