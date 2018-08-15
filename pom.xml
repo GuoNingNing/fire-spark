@@ -161,6 +161,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.solarmosaic.client</groupId>
+            <artifactId>mail-client_${scala.binary.version}</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.scalaj</groupId>
             <artifactId>scalaj-http_${scala.binary.version}</artifactId>
             <version>2.3.0</version>
