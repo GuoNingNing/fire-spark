@@ -121,8 +121,30 @@ function set_conf_dir(){
 	fi
 }
 
+function check_once(){
+	local app_name=$1
+	local pid=$$
+	if test -f $app_name && kill -0 $(cat $app_name) >/dev/null 2>&1;then
+		echo "run.sh already running. pid is $(cat $app_name)" >&2
+		exit 2;
+	fi
+	echo $pid >$app_name
+}
+
+function clear_once(){
+	local app_name=$1
+	local pid=$$
+	while :
+	do
+		if ! kill -0 $pid >/dev/null 2>&1;then
+			rm -rf $app_name
+		fi
+		sleep 1
+	done
+}
+
 function main(){
-	local proper=${1:-"$(basename $base).properties"}
+	local proper=${1:-"$(basename $base).properties"};shift
 	proper=$(set_conf_dir $proper)
 	test ! -f "$proper" && { echo "file $proper not found">&2;exit; }
 	proper=$(get_abs_path $proper)
@@ -135,32 +157,35 @@ function main(){
 	get_param "main" "spark.run.main"
 	get_param "main_jar" "spark.run.main.jar"
 	get_param "appname" "spark.app.name" "${main}.App"
-	get_param "self_param" "spark.run.self.params" "#"
+	get_param "self_param" "spark.run.self.params" "()"
 	get_param "lib_path" "spark.run.lib.path" $(set_default_lib $proper)
 
 	get_param "ding_token" "spark.run.alert.ding.api" "#"
 	get_param "ding_contacts" "spark.run.alert.ding.contacts" "#"
 	get_param "ding_context" "spark.run.alert.ding.context" "任务已经开始提交"
 
+	check_once "$(dirname $proper)/.${appname}"
+	clear_once "$(dirname $proper)/.${appname}" &
+
 	set_abs_lib "$proper" "lib_path"
 	main_jar=$lib_path/$main_jar
 	test ! -f "$main_jar" && { echo "$main_jar file does not exist">&2;exit; }
-	test "x$self_param" != "x#" && self_params=($(echo $self_param | awk -F ',' '{for(i=1;i<=NF;i++){print $i}}'))
+	test "x$self_param" != "x" && self_params=($(echo $self_param | awk -F ',' '{for(i=1;i<=NF;i++){print $i}}'))
 
 	check_run $2
 	set_jars
 
 	local spark_submit=spark-submit
-	local main_parameter="--name $appname --properties-file $proper $jars --class $main $main_jar ${self_params[@]}"
+	local main_parameter="--name $appname --properties-file $proper $jars --class $main $main_jar"
 	echo "spark-submit $main_parameter"
 
 	test $(check_cmd "spark2-submit") -eq 1 && spark_submit=spark2-submit
 	check_command spark-submit
 	send_ding "$ding_token" "$ding_contacts" "$appname $ding_context"
-	sudo -u hdfs $spark_submit $main_parameter
+	sudo -u hdfs spark2-submit $main_parameter "$@"
 }
 
-test $# -eq 0 && { 
+test $# -eq 0 && {
 	echo -e "Usage Ex:\n\tbash $base/$0 kafka_2_hdfs.properties">&2;
 	exit;
 }
