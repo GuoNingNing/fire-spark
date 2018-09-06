@@ -176,7 +176,7 @@ function main(){
 	set_jars
 
 	local spark_submit=spark-submit
-	local main_parameter="--name $appname --properties-file $proper $jars --class $main $main_jar ${self_params[*]}"
+	local main_parameter="--name $appname --properties-file $proper $jars --class $main $main_jar"
 	echo "spark-submit $main_parameter"
 
 	test $(check_cmd "spark2-submit") -eq 1 && spark_submit=spark2-submit
