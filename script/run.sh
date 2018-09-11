@@ -80,15 +80,20 @@ function check_run(){
 	local appids=($(yarn application -list | awk -v app=$appname '{if($2==app){print $1}}'))
     test ${#appids[@]} -eq 0 && test "x$flag" == "xstop" && { echo "Spark app $appname already stop.">&2;exit 2; }
     if test ${#appids[@]} -ne 0;then
-  	if [ "x$flag" == "xstop" ];then
-		for flag in ${appids[@]}
+		local appid=${appids[0]}
+		local id=""
+		unset appids[0]
+		for id in ${appids[@]}
 		do
-			echo "yarn application -kill $flag">&2
-			yarn application -kill $flag
+			echo "yarn application -kill $id">&2
+			yarn application -kill $id
 		done
-		exit 0;
-	fi
-        echo "Spark app $appname already running. ${appids[@]}" >&2;
+		if [ "x$flag" == "xstop" ];then
+			echo "yarn application -kill $appid">&2
+			yarn application -kill $appid
+			exit 0;
+		fi
+        echo "Spark app $appname already running. $appid" >&2;
         exit 2;
     fi
 }
@@ -151,6 +156,9 @@ function main(){
 	user_proper_file=$proper
 
 	my_include
+	my_include /etc/profile
+	my_include /etc/bashrc
+	my_include $HOME/.bashrc
 	test $(check_cmd "java") -eq 0 && check_env "JAVA_HOME"
 	test $(check_cmd "spark-submit") -eq 0 && check_env "SPARK_HOME"
 
