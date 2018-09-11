@@ -157,7 +157,7 @@ function main(){
 	get_param "main" "spark.run.main"
 	get_param "main_jar" "spark.run.main.jar"
 	get_param "appname" "spark.app.name" "${main}.App"
-	get_param "self_param" "spark.run.self.params" "()"
+	#get_param "self_param" "spark.run.self.params" "#"
 	get_param "lib_path" "spark.run.lib.path" $(set_default_lib $proper)
 
 	get_param "ding_token" "spark.run.alert.ding.api" "#"
@@ -170,13 +170,15 @@ function main(){
 	set_abs_lib "$proper" "lib_path"
 	main_jar=$lib_path/$main_jar
 	test ! -f "$main_jar" && { echo "$main_jar file does not exist">&2;exit; }
-	test "x$self_param" != "x" && self_params=($(echo $self_param | awk -F ',' '{for(i=1;i<=NF;i++){print $i}}'))
+	#test "x$self_param" != "x" && self_params=($(echo $self_param | awk -F ',' '{for(i=1;i<=NF;i++){print $i}}'))
 
-	check_run $2
+	local is_stop=""
+	test "x$2" == "xstop" && is_stop="stop"
+	check_run $is_stop
 	set_jars
 
 	local spark_submit=spark-submit
-	local main_parameter="--name $appname --properties-file $proper $jars --class $main $main_jar ${self_params[*]}"
+	local main_parameter="--name $appname --properties-file $proper $jars --class $main $main_jar"
 	echo "spark-submit $main_parameter"
 
 	test $(check_cmd "spark2-submit") -eq 1 && spark_submit=spark2-submit
