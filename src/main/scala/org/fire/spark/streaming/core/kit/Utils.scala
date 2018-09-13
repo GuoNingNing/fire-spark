@@ -1,13 +1,13 @@
 package org.fire.spark.streaming.core.kit
 
-import java.io.{File, FileInputStream, IOException, InputStreamReader}
+import java.io._
 import java.util.Properties
+import java.net.Proxy
 
 import org.apache.spark.SparkException
 
 import scala.collection.JavaConverters._
-import scala.collection.Map
-
+import scala.util.Try
 import scalaj.http._
 
 /**
@@ -44,17 +44,47 @@ object Utils {
 
   }
 
-  def httpPost(url : String,data : String,headers : Map[String,String] = Map.empty[String,String]): (Int,String) ={
-    var req = Http(url).postData(data)
-    headers.foreach {case (k,v) => req=req.header(k,v)}
-    val res = req.asString
+  def httpReq(url: String,
+              proxy: Proxy = Proxy.NO_PROXY): HttpRequest = Http(url).timeout(10000,10000).proxy(proxy)
+
+  def httpPost(url : String,
+               data : String,
+               headers : Map[String,String]): (Int,String) ={
+    val res = httpReq(url).postData(data).headers(headers).asString
     (res.code,res.body)
+  }
+
+  def httpPost(url: String,
+               data: Seq[(String, String)],
+               headers: Map[String, String]): (Int,String) = {
+    val res = httpReq(url).postForm(data).headers(headers).asString
+    (res.code, res.body)
   }
 
   def httpGet(url : String,param : Seq[(String,String)]) : (Int,String) = {
     val req = Http(url).params(param)
     val res = req.asString
     (res.code,res.body)
+  }
+
+  def httpGetFile(url: String, filename: String): Boolean = {
+    val res = httpReq(url).execute { is =>
+      saveToFile[InputStream](filename, is, (in,out) => {
+        val buffer = new Array[Byte](4096)
+        Iterator.continually(in.read(buffer)).takeWhile(-1 !=).foreach(c => out.write(buffer,0,c))
+      })
+    }
+    res.body
+  }
+
+  def saveToFile[T](fileName: String, content: T, writeFile: (T, OutputStream) => Unit): Boolean = {
+    Try {
+      val fos = new java.io.FileOutputStream(fileName)
+      writeFile(content, fos)
+      fos.flush()
+      fos.close()
+      true
+    }.getOrElse(false)
   }
 
 }
