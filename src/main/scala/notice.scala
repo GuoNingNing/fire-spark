@@ -1,6 +1,8 @@
+import javax.mail.internet.InternetAddress
+import javax.mail.{Authenticator, PasswordAuthentication}
+
 import com.solarmosaic.client.mail.EnvelopeWrappers
 import com.solarmosaic.client.mail.content.ContentType.MultipartTypes
-import javax.mail.{Authenticator, PasswordAuthentication}
 
 /**
   * Created by guoning on 2017/6/6.
@@ -21,7 +23,8 @@ package object notice {
                    password:String,
                    addr:String="",
                    port:Int = 587,
-                   tls:Boolean=false
+                   tls:Boolean=false,
+                   subtype:String="text"
                   ) extends Authenticator {
     override def getPasswordAuthentication(): PasswordAuthentication = {
       new PasswordAuthentication(user, password)
@@ -63,20 +66,20 @@ package object notice {
 
 
       val config = SmtpConfiguration(host = email.addr,
-        port = email.port,
-        tls = email.tls,
-        debug = true,
-        authenticator = Some(email)
-      )
+                                      port = email.port,
+                                      tls = email.tls,
+                                      debug = false,
+                                      authenticator = Some(email)
+                 )
       val mailer = Mailer(config)
       val content = Multipart(
-        parts = Seq(Text("text"), Html(s"<p>${email.message}</p>")),
+        parts = Seq(Text(email.subtype), Html(s"<p>${email.message}</p>")),
         subType = MultipartTypes.alternative
       )
 
       val envelope = Envelope(
         from = email.user,
-        to = Seq(email.to),
+        to = email.to.split(",").toSeq.map(x => new InternetAddress(x)),
         subject = email.subject,
         content = content
       )
