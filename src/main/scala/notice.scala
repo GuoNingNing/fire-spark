@@ -44,7 +44,7 @@ package object notice {
            |  },
            |  "at": {
            |    "atMobiles": [
-           |      "${ding.to}"
+           |      ${ding.to}
            |    ],
            |    "isAtAll": false
            |  }
