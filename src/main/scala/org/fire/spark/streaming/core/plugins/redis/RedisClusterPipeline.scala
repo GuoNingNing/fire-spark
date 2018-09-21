@@ -3,6 +3,7 @@ package org.fire.spark.streaming.core.plugins.redis
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
+import org.apache.spark.SparkConf
 import org.fire.spark.streaming.core.plugins.redis.RedisClusterPipeline.RedisCmd
 import redis.clients.jedis._
 import redis.clients.jedis.exceptions.{JedisAskDataException, JedisConnectionException, JedisDataException, JedisMovedDataException}
@@ -13,18 +14,43 @@ import scala.util.Try
 
 /**
   * Created by cloud on 18/9/18.
+  * redisCluster pipe 通过把key提前按slot分组,再在各slot主机上进行pipe调用
+  * 通过返回值列表判断命令是否需要moved和ask然后在进行尝试
+  * 执行结果返回List[String]
+  * 不支持线程安全
   */
-class RedisClusterPipeline {
+class RedisClusterPipeline(val sparkConf: SparkConf) {
 
-  val hosts = Collections.singleton(RedisClusterPipeline.getHostAndPort("",6379))
+  val redisHost = sparkConf.get("spark.redis.host")
+  val redisPort = sparkConf.get("spark.redis.port").toInt
+
+  val hosts = Collections.singleton(RedisClusterPipeline.getHostAndPort(redisHost,redisPort))
   val poolConfig = RedisClusterPipeline.getJedisPoolConfig
   val connectionHandler = new JedisSlotBasedConnectionHandler(hosts, poolConfig, 30000)
 
   val response = new ConcurrentHashMap[Int,(String, Int)]()
   val command = new ConcurrentHashMap[Int, List[RedisCmd]]()
 
+  def cmdExec(redisCmd: RedisCmd, pipe: Pipeline): Unit = {
+    redisCmd.cmd.toUpperCase match {
+      case "SET" => pipe.set(redisCmd.key, redisCmd.params(0))
+      case "LPUSH" => pipe.lpush(redisCmd.key, redisCmd.params(0))
+      case "GET" => pipe.get(redisCmd.key)
+      case "EXPIRE" => pipe.expire(redisCmd.key, redisCmd.params(0).toInt)
+      case _ => //No-op
+    }
+  }
+
   def set(k: String, v: String): Unit = {
     putCmd("set",k, Array(v))
+  }
+
+  def get(k: String): Unit = {
+    putCmd("get", k, Array.empty[String])
+  }
+
+  def expire(k: String, exp: Int): Unit = {
+    putCmd("expire", k, Array(s"$exp"))
   }
 
   def lpush(k: String, v: String): Unit = {
@@ -37,10 +63,12 @@ class RedisClusterPipeline {
   }
 
   def execute(): List[String] = {
-    command.flatMap { case (k, v) =>
+    val res = command.flatMap { case (k, v) =>
       val jedis = connectionHandler.getConnectionFromSlot(k)
       askAndMoved(v, jedis)
     }.toList
+    command.clear()
+    res
   }
 
   def askAndMoved(cmds: List[RedisCmd], conn: Jedis): Array[String] = {
@@ -114,14 +142,6 @@ class RedisClusterPipeline {
   def targetHostAndPort(msg: String): Array[String] = {
     val mi = msg.split(" ")
     mi(2).split(":")
-  }
-
-  def cmdExec(redisCmd: RedisCmd, pipe: Pipeline): Unit = {
-    redisCmd.cmd.toUpperCase match {
-      case "SET" => pipe.set(redisCmd.key, redisCmd.params(0))
-      case "LPUSH" => pipe.lpush(redisCmd.key, redisCmd.params(0))
-      case _ => //No-op
-    }
   }
 
 }
