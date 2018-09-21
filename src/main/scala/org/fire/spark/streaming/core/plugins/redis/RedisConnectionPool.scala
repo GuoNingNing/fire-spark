@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.exceptions.JedisConnectionException
-import redis.clients.jedis.{Jedis, JedisPool, JedisPoolConfig, Pipeline}
+import redis.clients.jedis._
 
 import scala.annotation.meta.getter
 import scala.collection.JavaConversions._
@@ -141,5 +141,17 @@ object RedisConnectionPool {
   }
 
   def close(): Unit = pools.foreach { case (k, v) => v.close() }
+
+  def connectCluster(re: RedisEndpoint): JedisCluster = {
+    val poolConfig: JedisPoolConfig = new JedisPoolConfig()
+    poolConfig.setMaxTotal(1000)
+    poolConfig.setMaxIdle(64)
+    poolConfig.setTestOnBorrow(true)
+    poolConfig.setTestOnReturn(false)
+    poolConfig.setMinEvictableIdleTimeMillis(180000)
+    poolConfig.setTimeBetweenEvictionRunsMillis(30000)
+    poolConfig.setNumTestsPerEvictionRun(-1)
+    new JedisCluster(new HostAndPort(re.host, re.port), poolConfig)
+  }
 
 }
