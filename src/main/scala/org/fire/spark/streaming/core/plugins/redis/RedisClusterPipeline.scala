@@ -71,7 +71,7 @@ class RedisClusterPipeline(val sparkConf: SparkConf) {
     res
   }
 
-  def askAndMoved(cmds: List[RedisCmd], conn: Jedis): Array[String] = {
+  private def askAndMoved(cmds: List[RedisCmd], conn: Jedis): Array[String] = {
     try {
       val result = new Array[String](cmds.length)
       val res = pipeExec(cmds, conn)
@@ -97,7 +97,7 @@ class RedisClusterPipeline(val sparkConf: SparkConf) {
     }
   }
 
-  def pipeExec(cmds: List[RedisCmd], conn: Jedis): List[AnyRef] = {
+  private def pipeExec(cmds: List[RedisCmd], conn: Jedis): List[AnyRef] = {
     try {
       val p = conn.pipelined()
       cmds.foreach(cmdExec(_, p))
@@ -108,7 +108,7 @@ class RedisClusterPipeline(val sparkConf: SparkConf) {
     }
   }
 
-  def writeRes(response: List[AnyRef], result: Array[String], indexs: List[Int] = List.empty): Unit = {
+  private def writeRes(response: List[AnyRef], result: Array[String], indexs: List[Int] = List.empty): Unit = {
     indexs.isEmpty match {
       case true =>
         response
@@ -125,7 +125,7 @@ class RedisClusterPipeline(val sparkConf: SparkConf) {
     }
   }
 
-  def parseAskAndMoved(res: AnyRef,index: Int): Option[(Int,HostAndPort)] = {
+  private def parseAskAndMoved(res: AnyRef,index: Int): Option[(Int,HostAndPort)] = {
     res match {
       case ask: JedisAskDataException =>
         val hp = targetHostAndPort(ask.getMessage)
@@ -139,7 +139,7 @@ class RedisClusterPipeline(val sparkConf: SparkConf) {
     }
   }
 
-  def targetHostAndPort(msg: String): Array[String] = {
+  private def targetHostAndPort(msg: String): Array[String] = {
     val mi = msg.split(" ")
     mi(2).split(":")
   }
