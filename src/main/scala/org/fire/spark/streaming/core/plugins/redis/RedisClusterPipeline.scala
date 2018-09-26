@@ -23,10 +23,11 @@ class RedisClusterPipeline(val sparkConf: SparkConf) {
 
   val redisHost = sparkConf.get("spark.redis.host")
   val redisPort = sparkConf.get("spark.redis.port").toInt
+  val redisPassword = sparkConf.get("spark.redis.password")
 
   val hosts = Collections.singleton(RedisClusterPipeline.getHostAndPort(redisHost,redisPort))
   val poolConfig = RedisClusterPipeline.getJedisPoolConfig
-  val connectionHandler = new JedisSlotBasedConnectionHandler(hosts, poolConfig, 30000)
+  val connectionHandler = new JedisSlotBasedConnectionHandler(hosts, poolConfig, 30000, 30000, redisPassword)
 
   val response = new ConcurrentHashMap[Int,(String, Int)]()
   val command = new ConcurrentHashMap[Int, List[RedisCmd]]()
