@@ -145,6 +145,10 @@ class RedisClusterPipeline(val sparkConf: SparkConf) {
     mi(2).split(":")
   }
 
+  def close(): Unit = {
+    connectionHandler.close()
+  }
+
 }
 
 object RedisClusterPipeline {
