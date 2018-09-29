@@ -172,8 +172,8 @@ function main(){
 	get_param "ding_contacts" "spark.run.alert.ding.contacts" "#"
 	get_param "ding_context" "spark.run.alert.ding.context" "任务已经开始提交"
 
-	#check_once "$(dirname $proper)/.${appname}"
-	#clear_once "$(dirname $proper)/.${appname}" &
+	check_once "$(dirname $proper)/.${appname}"
+	clear_once "$(dirname $proper)/.${appname}" &
 
 	set_abs_lib "$proper" "lib_path"
 	main_jar=$lib_path/$main_jar
