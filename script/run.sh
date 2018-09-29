@@ -181,7 +181,7 @@ function main(){
 	#test "x$self_param" != "x" && self_params=($(echo $self_param | awk -F ',' '{for(i=1;i<=NF;i++){print $i}}'))
 
 	local is_stop=""
-	test "x$2" == "xstop" && is_stop="stop"
+	test "x$1" == "xstop" && is_stop="stop" && shift
 	check_run $is_stop
 	set_jars
 
