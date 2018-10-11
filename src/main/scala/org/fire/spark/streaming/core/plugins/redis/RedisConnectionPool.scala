@@ -178,10 +178,4 @@ object RedisConnectionPool {
   def close(): Unit = pools.foreach { case (k, v) => v.close() }
 
 
-  def main(args: Array[String]): Unit = {
-    val redis = connectForCluster(new RedisEndpoint("172.17.191.209",6379,"ef4efab16ff00fd0e0e6f7fe1814ccbb"))
-
-    println(redis.dbSize())
-  }
-
 }

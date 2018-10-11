@@ -1,5 +1,6 @@
 import com.solarmosaic.client.mail.EnvelopeWrappers
 import com.solarmosaic.client.mail.content.ContentType.MultipartTypes
+import javax.mail.internet.InternetAddress
 import javax.mail.{Authenticator, PasswordAuthentication}
 
 /**
@@ -14,21 +15,22 @@ package object notice {
   import org.fire.spark.streaming.core.kit.Utils
 
   case class Ding(api: String, to: String, message: String)
-  case class EMail(to:String,
-                   subject:String,
-                   message:String,
-                   user:String,
-                   password:String,
-                   addr:String="",
-                   port:Int = 587,
-                   tls:Boolean=false
+
+  case class EMail(to: String,
+                   subject: String,
+                   message: String,
+                   user: String,
+                   password: String,
+                   addr: String = "",
+                   port: Int = 587,
+                   tls: Boolean = false
                   ) extends Authenticator {
     override def getPasswordAuthentication(): PasswordAuthentication = {
       new PasswordAuthentication(user, password)
     }
   }
 
-  object send extends EnvelopeWrappers {
+  object send {
 
     def a(ding: Ding): Unit = {
 
@@ -49,8 +51,7 @@ package object notice {
         """.stripMargin
 
       val headers = Map("content-type" -> "application/json")
-      val (code,res) = Utils.httpPost(ding.api,body,headers)
-
+      val (code, res) = Utils.httpPost(ding.api, body, headers)
       println(s"result code : $code , body : $res")
     }
 
@@ -60,7 +61,6 @@ package object notice {
       import com.solarmosaic.client.mail._
       import com.solarmosaic.client.mail.configuration._
       import com.solarmosaic.client.mail.content._
-
 
       val config = SmtpConfiguration(host = email.addr,
         port = email.port,
@@ -73,12 +73,11 @@ package object notice {
         parts = Seq(Text("text"), Html(s"<p>${email.message}</p>")),
         subType = MultipartTypes.alternative
       )
-
       val envelope = Envelope(
-        from = email.user,
-        to = Seq(email.to),
-        subject = email.subject,
-        content = content
+        new InternetAddress(email.user),
+        Seq(new InternetAddress(email.to)),
+        email.subject,
+        content
       )
       mailer.send(envelope)
     }
