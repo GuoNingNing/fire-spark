@@ -2,8 +2,6 @@ import com.solarmosaic.client.mail.EnvelopeWrappers
 import com.solarmosaic.client.mail.content.ContentType.MultipartTypes
 import javax.mail.internet.InternetAddress
 import javax.mail.{Authenticator, PasswordAuthentication}
-import javax.mail.internet.InternetAddress
-import javax.mail.{Authenticator, PasswordAuthentication}
 
 /**
   * Created by guoning on 2017/6/6.
