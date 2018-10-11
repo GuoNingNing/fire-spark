@@ -2,6 +2,8 @@ import com.solarmosaic.client.mail.EnvelopeWrappers
 import com.solarmosaic.client.mail.content.ContentType.MultipartTypes
 import javax.mail.internet.InternetAddress
 import javax.mail.{Authenticator, PasswordAuthentication}
+import javax.mail.internet.InternetAddress
+import javax.mail.{Authenticator, PasswordAuthentication}
 
 /**
   * Created by guoning on 2017/6/6.
@@ -15,22 +17,22 @@ package object notice {
   import org.fire.spark.streaming.core.kit.Utils
 
   case class Ding(api: String, to: String, message: String)
-
-  case class EMail(to: String,
-                   subject: String,
-                   message: String,
-                   user: String,
-                   password: String,
-                   addr: String = "",
-                   port: Int = 587,
-                   tls: Boolean = false
+  case class EMail(to:String,
+                   subject:String,
+                   message:String,
+                   user:String,
+                   password:String,
+                   addr:String="",
+                   port:Int = 587,
+                   tls:Boolean=false,
+                   subtype:String="text"
                   ) extends Authenticator {
     override def getPasswordAuthentication(): PasswordAuthentication = {
       new PasswordAuthentication(user, password)
     }
   }
 
-  object send {
+  object send extends EnvelopeWrappers {
 
     def a(ding: Ding): Unit = {
 
@@ -43,7 +45,7 @@ package object notice {
            |  },
            |  "at": {
            |    "atMobiles": [
-           |      "${ding.to}"
+           |      ${ding.to}
            |    ],
            |    "isAtAll": false
            |  }
@@ -62,22 +64,24 @@ package object notice {
       import com.solarmosaic.client.mail.configuration._
       import com.solarmosaic.client.mail.content._
 
+
       val config = SmtpConfiguration(host = email.addr,
-        port = email.port,
-        tls = email.tls,
-        debug = true,
-        authenticator = Some(email)
-      )
+                                      port = email.port,
+                                      tls = email.tls,
+                                      debug = false,
+                                      authenticator = Some(email)
+                 )
       val mailer = Mailer(config)
       val content = Multipart(
-        parts = Seq(Text("text"), Html(s"<p>${email.message}</p>")),
+        parts = Seq(Text(email.subtype), Html(s"<p>${email.message}</p>")),
         subType = MultipartTypes.alternative
       )
+
       val envelope = Envelope(
-        new InternetAddress(email.user),
-        Seq(new InternetAddress(email.to)),
-        email.subject,
-        content
+        from = new InternetAddress(email.user),
+        to = email.to.split(",").toSeq.map(x => new InternetAddress(x)),
+        subject = email.subject,
+        content = content
       )
       mailer.send(envelope)
     }
