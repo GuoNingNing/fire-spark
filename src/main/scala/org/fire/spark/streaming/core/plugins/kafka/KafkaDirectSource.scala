@@ -36,7 +36,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
   lazy val repartition: Int = sparkConf.get("spark.source.kafka.consume.repartition", "0").toInt
 
   // kafka 消费 topic
-  private lazy val topicSet: Set[String] = specialKafkaParams.getOrElse("consume.topics",
+  private lazy val topicSet: Set[String] = specialKafkaParams.getOrElse("topics",
     sparkConf.get("spark.source.kafka.consume.topics")).split(",").map(_.trim).toSet
 
   // 组装 Kafka 参数
