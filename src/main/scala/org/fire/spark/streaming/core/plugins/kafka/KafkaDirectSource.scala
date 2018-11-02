@@ -25,7 +25,7 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
                                                   specialKafkaParams: Map[String, String] = Map.empty[String, String])
   extends Source {
 
-  override val paramPrefix: String = "spark.source.kafka.consume."
+  override val paramPrefix: String = "spark.source.kafka.consumer."
 
   // 保存 offset
   private lazy val offsetRanges: java.util.Map[Long, Array[OffsetRange]] = new ConcurrentHashMap[Long, Array[OffsetRange]]
@@ -33,11 +33,11 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
   private var canCommitOffsets: CanCommitOffsets = _
 
   // 分区数
-  private lazy val repartition: Int = sparkConf.get("spark.source.kafka.consume.repartition", "0").toInt
+  private lazy val repartition: Int = sparkConf.get(s"$paramPrefix.repartition", "0").toInt
 
   // kafka 消费 topic
-  private lazy val topicSet: Set[String] = specialKafkaParams.getOrElse("consume.topics",
-    sparkConf.get("spark.source.kafka.consume.topics")).split(",").map(_.trim).toSet
+  private lazy val topicSet: Set[String] = specialKafkaParams.getOrElse("topics",
+    sparkConf.get(s"$paramPrefix.topics")).split(",").map(_.trim).toSet
 
   // 组装 Kafka 参数
   private lazy val kafkaParams: Map[String, String] = {

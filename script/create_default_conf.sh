@@ -102,7 +102,7 @@ function spark_dynamic_params(){
 function fire_spark_source_kafka(){
 	create_notes "\nFire Spark Kafka Source\nbase config\n"
 	_p "spark.source.kafka.consume后面的配置是标准kafka配置"
-	local Lprefix="spark.source.kafka.consume"
+	local Lprefix="spark.source.kafka.consumer"
 	_p "kafka消费的topics配置,可以配置多个,每个topic之间用逗号[,]隔开\ndefault=" "topics" ""
 	_p "kafka consumer的group id.\ndefault=z.cloud.kafka.consumer.001" "group.id" "z.cloud.kafka.consumer.001"
 	_p "kafka集群的主机和端口号,可以配置多个,每个主机之间用逗号[,]隔开\ndefault=" "bootstrap.servers" ""
