@@ -25,7 +25,8 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
                                                   specialKafkaParams: Map[String, String] = Map.empty[String, String])
   extends Source {
 
-  override val paramPrefix: String = "spark.source.kafka.consumer."
+  private val prefix: String = "spark.source.kafka.consumer."
+  override val paramPrefix: String = "spark.source.kafka.consume."
 
   // 保存 offset
   private lazy val offsetRanges: java.util.Map[Long, Array[OffsetRange]] = new ConcurrentHashMap[Long, Array[OffsetRange]]
@@ -35,17 +36,17 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
   // 分区数
   private lazy val repartition: Int = sparkConf.get(s"$paramPrefix.repartition", "0").toInt
 
-  // kafka 消费 topic
-  private lazy val topicSet: Set[String] = specialKafkaParams.getOrElse("topics",
-    sparkConf.get(s"$paramPrefix.topics")).split(",").map(_.trim).toSet
+  // 兼容consumer和consume的差异
+  private lazy val globalParams = param.isEmpty match {
+    case true => sparkConf.getAllWithPrefix(prefix).toMap
+    case false => param
+  }
 
   // 组装 Kafka 参数
-  private lazy val kafkaParams: Map[String, String] = {
-    sparkConf.getAll.flatMap {
-      case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) => Some(k.substring(paramPrefix.length) -> v)
-      case _ => None
-    } toMap
-  } ++ specialKafkaParams ++ Map("enable.auto.commit" -> "false")
+  private lazy val kafkaParams = globalParams ++ specialKafkaParams ++ Map("enable.auto.commit" -> "false")
+
+  // kafka 消费 topic
+  private lazy val topicSet: Set[String] = kafkaParams("topics").split(",").map(_.trim).toSet
 
   private lazy val groupId = kafkaParams.get("group.id")
 
