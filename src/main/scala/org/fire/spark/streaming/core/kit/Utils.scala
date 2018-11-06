@@ -49,14 +49,14 @@ object Utils {
 
   def httpPost(url : String,
                data : String,
-               headers : Map[String,String]): (Int,String) ={
+               headers : Map[String,String] = Map.empty[String, String]): (Int,String) ={
     val res = httpReq(url).postData(data).headers(headers).asString
     (res.code,res.body)
   }
 
   def httpPost(url: String,
                data: Seq[(String, String)],
-               headers: Map[String, String]): (Int,String) = {
+               headers: Map[String, String] = Map.empty[String, String]): (Int,String) = {
     val res = httpReq(url).postForm(data).headers(headers).asString
     (res.code, res.body)
   }
