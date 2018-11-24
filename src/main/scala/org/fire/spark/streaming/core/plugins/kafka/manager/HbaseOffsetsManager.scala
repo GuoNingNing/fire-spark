@@ -166,39 +166,5 @@ class HbaseOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
     logInfo(s"deleteOffsets [ $groupId,${topics.mkString(",")} ] ${deletes.mkString(" ")}")
   }
 
-  /**
-    * 更新 Offset 到指定时间
-    *
-    * @param groupId
-    * @param topics
-    * @param time
-    */
-  def updateOffsetsForTime(groupId: String, topics: Set[String], time: Long): Unit = {
-    val offset = getOffsets(topics.toSeq, time)
-    updateOffsets(groupId, offset)
-  }
-
-  /**
-    * 跟新Offset 到 最开始
-    *
-    * @param groupId
-    * @param topics
-    */
-  def updateOffsetsForEarliest(groupId: String, topics: Set[String]): Unit = {
-    val offset = getEarliestOffsets(topics.toSeq)
-    updateOffsets(groupId, offset)
-  }
-
-  /**
-    * 更新Offset 到最后
-    *
-    * @param groupId
-    * @param topics
-    */
-  def updateOffsetsForLatest(groupId: String, topics: Set[String]): Unit = {
-    val offset = getLatestOffsets(topics.toSeq)
-    updateOffsets(groupId, offset)
-  }
-
 
 }

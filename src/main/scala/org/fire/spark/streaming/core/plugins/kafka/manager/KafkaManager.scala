@@ -188,19 +188,19 @@ trait OffsetsManager extends Logging with Serializable {
   def generateKey(groupId: String, topic: String): String = s"$groupId#$topic"
 
 
-  def getLeaders(topics: Seq[String]): Map[(String,Int), Seq[TopicPartition]] = {
+  def getLeaders(topics: Seq[String]): Map[(String, Int), Seq[TopicPartition]] = {
     val consumer = new SimpleConsumer(host, port, 100000, 64 * 1024, s"leaderLookup-${System.currentTimeMillis()}")
     val req = new TopicMetadataRequest(topics, 0)
     val resp = consumer.send(req)
 
-    val leaderAndTopicPartition = new mutable.HashMap[(String,Int), Seq[TopicPartition]]()
+    val leaderAndTopicPartition = new mutable.HashMap[(String, Int), Seq[TopicPartition]]()
 
     resp.topicsMetadata.foreach((metadata: TopicMetadata) => {
       val topic = metadata.topic
       metadata.partitionsMetadata.foreach((partition: PartitionMetadata) => {
         partition.leader match {
           case Some(endPoint) =>
-            val hp = Tuple2(endPoint.host,endPoint.port)
+            val hp = Tuple2(endPoint.host, endPoint.port)
             leaderAndTopicPartition.get(hp) match {
               case Some(taps) => leaderAndTopicPartition.put(hp, taps :+ new TopicPartition(topic, partition.partitionId))
               case None => leaderAndTopicPartition.put(hp, Seq(new TopicPartition(topic, partition.partitionId)))
@@ -242,7 +242,7 @@ trait OffsetsManager extends Logging with Serializable {
     val offsetMap = new mutable.HashMap[TopicPartition, Long]()
 
     leaders.foreach {
-      case ((leaderHost,_port), taps) =>
+      case ((leaderHost, _port), taps) =>
         val consumer = new SimpleConsumer(leaderHost, _port, 100000, 64 * 1024, s"offsetLookup-${System.currentTimeMillis()}")
 
         val requestInfo = taps.map(x => TopicAndPartition(x.topic(), x.partition()) -> PartitionOffsetRequestInfo(time, 1)).toMap
@@ -264,5 +264,40 @@ trait OffsetsManager extends Logging with Serializable {
     }
     offsetMap.toMap
   }
+
+  /**
+    * 更新 Offset 到指定时间
+    *
+    * @param groupId
+    * @param topics
+    * @param time
+    */
+  def updateOffsetsForTime(groupId: String, topics: Set[String], time: Long): Unit = {
+    val offset = getOffsets(topics.toSeq, time)
+    updateOffsets(groupId, offset)
+  }
+
+  /**
+    * 跟新Offset 到 最开始
+    *
+    * @param groupId
+    * @param topics
+    */
+  def updateOffsetsForEarliest(groupId: String, topics: Set[String]): Unit = {
+    val offset = getEarliestOffsets(topics.toSeq)
+    updateOffsets(groupId, offset)
+  }
+
+  /**
+    * 更新Offset 到最后
+    *
+    * @param groupId
+    * @param topics
+    */
+  def updateOffsetsForLatest(groupId: String, topics: Set[String]): Unit = {
+    val offset = getLatestOffsets(topics.toSeq)
+    updateOffsets(groupId, offset)
+  }
+
 
 }
