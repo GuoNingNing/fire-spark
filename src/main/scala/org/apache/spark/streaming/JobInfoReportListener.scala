@@ -117,7 +117,16 @@ class JobInfoReportListener(ssc: StreamingContext) extends StreamingListener wit
   * @param schedulingDelay
   * @param startedOrCompleted
   */
-case class SparkAppInfo(name: String, master: String, batchDuration: Long, appId: String, topic: String, batchTime: String, numRecords: Long, schedulingDelay: Long, processingDelay: Long, startedOrCompleted: String) {
+case class SparkAppInfo(name: String,
+                        master: String,
+                        batchDuration: Long,
+                        appId: String,
+                        topic: String,
+                        batchTime: String,
+                        numRecords: Long,
+                        schedulingDelay: Long,
+                        processingDelay: Long,
+                        startedOrCompleted: String) {
   override def toString: String = {
     s"""{"name":"$name","master":"$master","batchDuration":$batchDuration,"appId":"$appId","topic":"$topic","batchTime":"$batchTime","numRecords":$numRecords,"schedulingDelay":$schedulingDelay,"processingDelay":$processingDelay,"startedOrCompleted":"$startedOrCompleted"}"""
   }

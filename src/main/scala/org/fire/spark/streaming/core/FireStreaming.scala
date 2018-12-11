@@ -1,8 +1,8 @@
 package org.fire.spark.streaming.core
 
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.{Seconds, StreamingContext}
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.streaming.{JobInfoReportListener, Seconds, StreamingContext}
 import org.fire.spark.streaming.core.kit.Utils
 
 import scala.annotation.meta.getter
@@ -21,7 +21,11 @@ trait FireStreaming {
 
   private final var _args: Array[String] = _
 
-  private val sparkListeners = new ArrayBuffer[String]()
+    // 默认加载自定义listener
+  private val sparkListeners = ArrayBuffer(
+      "JobInfoReportListener",
+      "CongestionMonitorListener"
+  )
 
   // checkpoint目录
   private var checkpointPath: String = ""
@@ -59,6 +63,29 @@ trait FireStreaming {
   @deprecated
   def addSparkListeners(listener: String): Unit = sparkListeners += listener
 
+    /**
+      * 自定义sparkStreamingListener 加载
+      * @param ssc
+      * @param listener
+      * @return
+      */
+  def addSparkStreamingListeners(ssc:StreamingContext,listener: String):StreamingContext = {
+
+      listener.split(",")
+              .map(_.trim)
+              .foreach {
+                  case "JobInfoReportListener" | "org.apache.spark.streaming.JobInfoReportListener" => {
+                      ssc.addStreamingListener(new JobInfoReportListener(ssc))
+                  }
+                  case "CongestionMonitorListener" | "org.apache.spark.streaming.CongestionMonitorListener" => {
+                      ssc.addStreamingListener(new JobInfoReportListener(ssc))
+                  }
+                  case _ => {
+                      println("invalid listener")
+                  }
+              }
+      ssc
+  }
   /**
     * 处理函数
     *
@@ -87,9 +114,8 @@ trait FireStreaming {
 
     init(sparkConf)
 
+      // 符合默认加载的，走默认加载，不符合的走自定义加载
     val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
-    if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
-
 
     sparkSession = SparkSession.builder().config(sparkConf).enableHiveSupport().getOrCreate()
 
@@ -97,7 +123,7 @@ trait FireStreaming {
     val slide = sparkConf.get("spark.batch.duration").toInt
     val ssc = new StreamingContext(sparkSession.sparkContext, Seconds(slide))
 
-    handle(ssc)
+    handle(addSparkStreamingListeners(ssc, extraListeners))
     ssc
   }
 
