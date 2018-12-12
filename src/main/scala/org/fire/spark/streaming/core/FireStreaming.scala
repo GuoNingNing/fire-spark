@@ -21,11 +21,6 @@ trait FireStreaming {
 
   private final var _args: Array[String] = _
 
-    // 默认加载自定义listener
-  private val sparkListeners = ArrayBuffer(
-      "JobInfoReportListener",
-      "CongestionMonitorListener"
-  )
 
   // checkpoint目录
   private var checkpointPath: String = ""
@@ -53,15 +48,6 @@ trait FireStreaming {
     */
   def beforeStop(ssc: StreamingContext): Unit = {}
 
-  /**
-    * 添加sparkListener
-    * 如使用此函数添加,则必须在 handle 函数之前调用此函数
-    *
-    * @param listener
-    * @deprecated 建议直接在配置文件中添加
-    */
-  @deprecated
-  def addSparkListeners(listener: String): Unit = sparkListeners += listener
 
     /**
       * 自定义sparkStreamingListener 加载
@@ -114,16 +100,14 @@ trait FireStreaming {
 
     init(sparkConf)
 
-      // 符合默认加载的，走默认加载，不符合的走自定义加载
-    val extraListeners = sparkListeners.mkString(",") + "," + sparkConf.get("spark.extraListeners", "")
 
-    sparkSession = SparkSession.builder().config(sparkConf).enableHiveSupport().getOrCreate()
+      sparkSession = SparkSession.builder().config(sparkConf).enableHiveSupport().getOrCreate()
 
     // 时间间隔
     val slide = sparkConf.get("spark.batch.duration").toInt
     val ssc = new StreamingContext(sparkSession.sparkContext, Seconds(slide))
 
-    handle(addSparkStreamingListeners(ssc, extraListeners))
+    handle(addSparkStreamingListeners(ssc, sparkConf.get("spark.user.extraListeners")))
     ssc
   }
 
