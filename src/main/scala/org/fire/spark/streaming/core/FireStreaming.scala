@@ -107,7 +107,7 @@ trait FireStreaming {
     val slide = sparkConf.get("spark.batch.duration").toInt
     val ssc = new StreamingContext(sparkSession.sparkContext, Seconds(slide))
 
-    handle(addSparkStreamingListeners(ssc, sparkConf.get("spark.user.extraListeners")))
+    handle(addSparkStreamingListeners(ssc, sparkConf.get("spark.user.extraListeners", "")))
     ssc
   }
 
