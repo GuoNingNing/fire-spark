@@ -1,0 +1,49 @@
+package org.fire.spark.streaming.core.kit
+
+import java.util.concurrent.LinkedBlockingDeque
+
+/**
+  * Created by cloud on 2019/01/19.
+  */
+object ThreadUtil {
+
+  def multiThreadExec[T, R](iter: Iterator[T],
+                            fun: Iterator[T] => Iterator[R],
+                            number: Int = 2,
+                            capacity: Int = 10): Iterator[R] = {
+    val pushQueues = 1 to number map(x => new LinkedBlockingDeque[Option[T]](capacity)) toList
+    val pullQueue = new LinkedBlockingDeque[Option[R]](capacity*2)
+
+    val threads = 1 to number map { x =>
+      new Thread() {
+        override def run(): Unit = {
+          fun(new QueueIterator[T](pushQueues(x-1))).foreach(x => pullQueue.put(Some(x)))
+        }
+      }
+    }
+
+    threads.foreach(_.start())
+    new Thread() {
+      override def run(): Unit = {
+        iter.foreach(x => pushQueues(x.hashCode()%number).put(Some(x)))
+        pushQueues.foreach(_.put(None))
+        threads.foreach(_.join())
+        pullQueue.put(None)
+      }
+    }.start()
+
+    new QueueIterator[R](pullQueue)
+  }
+
+  private class QueueIterator[T](queue: LinkedBlockingDeque[Option[T]]) extends Iterator[T] {
+    var t: Option[T] = _
+
+    override def hasNext: Boolean = {
+      t = queue.take()
+      t.isDefined
+    }
+
+    override def next(): T = t.get
+  }
+
+}
