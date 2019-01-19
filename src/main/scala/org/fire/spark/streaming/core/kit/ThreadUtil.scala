@@ -37,7 +37,7 @@ object ThreadUtil {
     threads.foreach(_.start())
     new Thread() {
       override def run(): Unit = {
-        iter.foreach(x => pushQueues(x.hashCode()%number).put(Some(x)))
+        iter.foreach(x => pushQueues((x.hashCode() & 0x7FFFFFFF)%number).put(Some(x)))
         pushQueues.foreach(_.put(None))
         threads.foreach(_.join())
         pullQueue.put(None)
