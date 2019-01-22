@@ -3,6 +3,7 @@ package org.fire.spark.streaming.core.kit
 import java.util.concurrent.LinkedBlockingDeque
 
 import scala.concurrent.{Future, Promise}
+import scala.util.control.NonFatal
 
 /**
   * Created by cloud on 2019/01/19.
@@ -12,8 +13,10 @@ object ThreadUtil {
   def asyncExec[T](f: => T): Future[T] = {
     val p = Promise[T]()
     new Thread(){
-      override def run(): Unit = {
+      override def run(): Unit = try {
         p.success(f)
+      } catch {
+        case NonFatal(e) => p.failure(e)
       }
     }.start()
     p.future
