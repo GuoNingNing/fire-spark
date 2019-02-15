@@ -1,13 +1,10 @@
-# Fire-Spark
-    让Spark开发变得更简单
-    
-   [Demo工程](https://github.com/GuoNingNing/fire-spark-demo)
-    
-### BUILD和使用方法
-#### 1.构建方法
+Fire-Spark
+让Spark开发变得更简单
+Demo工程
 
-```
-    $git clone https://github.com/GuoNingNing/fire-spark.git
+BUILD和使用方法
+1.构建方法
+    $git clone -b 2.1.0_kafka-0.10 https://github.com/GuoNingNing/fire-spark.git
     $cd fire-spark
     $mvn clean install
 
@@ -17,13 +14,9 @@
     <dependency>
         <groupId>org.fire.spark.streaming</groupId>
     	<artifactId>fire-spark</artifactId>
-    	<version>2.2.0_kafka-0.10</version>
+    	<version>2.1.0_kafka-0.8</version>
     </dependency>
-```
-
-#### 2.配置说明
-
-```
+2.配置说明
 
 可使用script 中的create_default_conf.sh创建默认配置文件,使用方法:
 $bash create_default_conf.sh >my.properties
@@ -191,11 +184,7 @@ spark.sink.redis.timeout=30
 这只是简单的示例配置，更详细的配置参考后文中介绍的产生配置的脚本
 
 
-```
-  
-#### 3.示例代码  
-  
-```scala    
+3.示例代码
 package z.cloud.t3
 
 import org.apache.spark.streaming.StreamingContext
@@ -213,12 +202,7 @@ object Demon extends FireStreaming {
     }
 }
 
-
-```
-
-#### 4.运行示例代码
-
-```
+4.运行示例代码
     使用script中的create_default_conf.sh创建标准配置文件
     
     $bash create_default_conf.sh >my.properties
@@ -234,11 +218,8 @@ object Demon extends FireStreaming {
     停止(任意给第二个参数即可kill掉spark任务)
     $bash run.sh my.properties stop
     
-```
-
-#### 5.API 说明
-##### 5.1.框架说明
-```
+5.API 说明
+5.1.框架说明
     org
     ----apache.spark
         ----streaming[自定义的spark streaming一些Listenter]
@@ -293,10 +274,7 @@ object Demon extends FireStreaming {
         ----create_template_project.sh
             ----[创建模版项目,需要一个路径,将会在这个路径下创建模版项目]
             ----[模版项目包含一个父级pom文件以及一个子模块和模块需要的pom和assembly文件及相关目录结构]
-```
-
-##### 5.2.Spark相关内容
-* [Spark RPC](https://github.com/GuoNingNing/fire-spark/wiki/Spark-RPC)
-* [Spark Listener](https://github.com/GuoNingNing/fire-spark/wiki/SparkListener)
-* [Streaming Listener](https://github.com/GuoNingNing/fire-spark/wiki/StreamingListener)
-
+5.2.Spark相关内容
+Spark RPC
+Spark Listener
+Streaming Listener
