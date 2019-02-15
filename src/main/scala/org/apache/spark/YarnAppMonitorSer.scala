@@ -235,9 +235,9 @@ object YarnAppMonitorCli extends YarnAppMonitor {
     }
 
     val rpcTimeout = new RpcTimeout(FiniteDuration(timeout,TimeUnit.MILLISECONDS),timeoutProper)
-    val res=rpcEnvRef.askSync[YarnAppResponse](yarnAppReq,rpcTimeout)
-    logInfo(res.info)
-    System.exit(res.code)
+    val res=rpcEnvRef.ask[YarnAppResponse](yarnAppReq,rpcTimeout)
+    logInfo(res.value.get.get.toString)
+    System.exit(res.value.get.get.code)
   }
 }
 

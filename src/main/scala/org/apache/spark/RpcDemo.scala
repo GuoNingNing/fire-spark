@@ -78,8 +78,8 @@ object RpcDemoCli{
     rpcDemoRef.send(DemoSendReq("this is request not response"))
 
     val rpcTimeout = new RpcTimeout(FiniteDuration(timeout,TimeUnit.MILLISECONDS),timeoutString)
-    val res = rpcDemoRef.askSync[DemoRes](DemoReq("returnResponse"),rpcTimeout)
-    println(s"code : ${res.code}, info : ${res.info}")
+    val res = rpcDemoRef.ask[DemoRes](DemoReq("returnResponse"),rpcTimeout)
+    println(s"code : ${res.value.get.get.code}, info : ${res.value}")
   }
 }
 

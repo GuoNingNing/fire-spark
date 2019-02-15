@@ -22,7 +22,7 @@ object HbaseConnPool {
 
 
   def connect(params: Map[String, String]): Connection = {
-    val conf = HBaseConfiguration.create
+    val conf: Configuration = HBaseConfiguration.create
     for ((key, value) <- params) {
       conf.set(key, value)
     }
@@ -35,7 +35,7 @@ object HbaseConnPool {
   * */
   def connect(sparkConf: SparkConf): Connection = {
 
-    val conf = HBaseConfiguration.create
+    val conf: Configuration = HBaseConfiguration.create
 
     for ((key, value) <- sparkConf.getAllWithPrefix("spark.hbase.")) {
       conf.set(key, value)

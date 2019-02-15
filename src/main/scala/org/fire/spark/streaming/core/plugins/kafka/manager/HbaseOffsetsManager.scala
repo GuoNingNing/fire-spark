@@ -2,12 +2,10 @@ package org.fire.spark.streaming.core.plugins.kafka.manager
 
 import java.util
 
-import kafka.common.TopicAndPartition
-import org.apache.hadoop.hbase.{CellUtil, HColumnDescriptor, HTableDescriptor, TableName}
 import org.apache.hadoop.hbase.client.{Delete, Put, Scan, Table}
-import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.filter._
 import org.apache.hadoop.hbase.util.Bytes
+import org.apache.hadoop.hbase.{CellUtil, HColumnDescriptor, HTableDescriptor, TableName}
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.SparkConf
 import org.fire.spark.streaming.core.plugins.hbase.HbaseConnPool
