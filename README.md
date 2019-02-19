@@ -14,7 +14,7 @@ BUILD和使用方法
     <dependency>
         <groupId>org.fire.spark.streaming</groupId>
     	<artifactId>fire-spark</artifactId>
-    	<version>2.1.0_kafka-0.8</version>
+    	<version>2.1.0_kafka-0.10</version>
     </dependency>
 2.配置说明
 
@@ -44,7 +44,7 @@ spark.run.self.params=--checkpointPath,/tmp/checkpoint
 
 #可以是绝对路径,也可以是相对此配置文件的相对路径
 #相对路径会自动补全
-spark.lib.path=lib
+spark.lib.path=../../lib
 
 ######################################################
 #                                                    #
