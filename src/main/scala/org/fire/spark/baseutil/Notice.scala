@@ -1,3 +1,5 @@
+package org.fire.spark
+
 import com.solarmosaic.client.mail.EnvelopeWrappers
 import com.solarmosaic.client.mail.content.ContentType.MultipartTypes
 import javax.mail.internet.InternetAddress
@@ -10,7 +12,7 @@ import javax.mail.{Authenticator, PasswordAuthentication}
   *
   *
   */
-package object notice {
+package object Notice {
 
   import org.fire.spark.streaming.core.kit.Utils
 
