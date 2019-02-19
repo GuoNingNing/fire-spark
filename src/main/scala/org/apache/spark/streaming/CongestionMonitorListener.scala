@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.spark.streaming.scheduler._
+import org.fire.spark.Notice.{Ding, send}
 import org.fire.spark.streaming.core.FireConfig
 
 import scala.collection.mutable
@@ -84,7 +85,6 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
              |拥堵情况:$counter
              |拥堵数据:${batchInfos.map(_.numRecords).sum}
         """.stripMargin
-        import notice._
         send a Ding(sendApi, sendToDing.get, message)
       }
 
@@ -118,7 +118,6 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
              |调度延时:$schedulingDelay
              |执行延时:$processingDelay
         """.stripMargin
-        import notice._
         send a Ding(sendApi, sendToDing.get, message)
       } else if (getWell) {
         isAlerted = false
@@ -127,7 +126,6 @@ class CongestionMonitorListener(ssc: StreamingContext) extends StreamingListener
              |$name 已经恢复运行
              |拥堵时间:[$lastAlertTime ~ $time]
         """.stripMargin
-        import notice._
         send a Ding(sendApi, sendToDing.get, message)
       }
     }
