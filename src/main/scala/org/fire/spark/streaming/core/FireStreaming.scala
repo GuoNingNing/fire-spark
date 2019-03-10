@@ -22,6 +22,8 @@ trait FireStreaming {
     // 添加debug 参数，便于统一控制
     private final var _debug: Boolean = false
 
+    def isDebug: Boolean = _debug
+
 
     // checkpoint目录
     private var checkpointPath: String = ""
@@ -29,7 +31,6 @@ trait FireStreaming {
     // 从checkpoint 中恢复失败，则重新创建
     private var createOnError: Boolean = true
 
-    def isDebug: Boolean = _debug
 
     @(transient@getter)
     var sparkSession: SparkSession = _

@@ -15,6 +15,11 @@ trait FireSpark {
     protected final def args: Array[String] = _args
 
     private final var _args: Array[String] = _
+    // 添加debug 参数，便于统一控制
+    private final var _debug: Boolean = false
+
+    def isDebug: Boolean = _debug
+
 
     private val sparkListeners = new ArrayBuffer[String]()
 
@@ -59,6 +64,7 @@ trait FireSpark {
         val sparkConf = new SparkConf()
 
         sparkConf.set("spark.user.args", args.mkString("|"))
+        _debug = sparkConf.getBoolean("spark.fire.spark.debug", false)
 
         // 约定传入此参数,则表示本地 Debug
         if (sparkConf.contains("spark.properties.file")) {
