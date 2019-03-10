@@ -20,47 +20,47 @@ import scala.reflect.runtime.universe.TypeTag
   */
 class MysqlSink[T <: scala.Product : ClassTag : TypeTag](override
                                                          val sc: SparkContext)
-  extends Sink[T] {
+        extends Sink[T] {
 
 
-  private lazy val url = sparkConf.get("spark.sink.mysql.url")
-  private lazy val table = sparkConf.get("spark.sink.mysql.output_table_name")
-  private lazy val saveMode =
-    sparkConf.get("spark.sink.mysql.saveMode", "append")
-      .toLowerCase() match {
-      case "overwrite" => SaveMode.Overwrite
-      case "errorifexists" => SaveMode.ErrorIfExists
-      case "ignore" => SaveMode.Ignore
-      case _ => SaveMode.Append
+    private lazy val url = sparkConf.get("spark.sink.mysql.url")
+    private lazy val table = sparkConf.get("spark.sink.mysql.output_table_name")
+    private lazy val saveMode =
+        sparkConf.get("spark.sink.mysql.saveMode", "append")
+                .toLowerCase() match {
+            case "overwrite" => SaveMode.Overwrite
+            case "errorifexists" => SaveMode.ErrorIfExists
+            case "ignore" => SaveMode.Ignore
+            case _ => SaveMode.Append
+        }
+    val prop = new Properties()
+    prop.put("driver", sparkConf.get("spark.sink.mysql.driver", "com.mysql.jdbc.Driver"))
+    prop.put("dbtable", sparkConf.get("spark.sink.mysql.dbtable"))
+    prop.put("user", sparkConf.get("spark.sink.mysql.user"))
+    prop.put("password", sparkConf.get("spark.sink.mysql.password"))
+
+
+    /**
+      * 输出 到 Mysql
+      *
+      * @param rdd
+      * @param time
+      */
+    override def output(rdd: RDD[T], time: Time): Unit = {
+        val sqlContext = SparkSession.builder().getOrCreate().sqlContext
+        import sqlContext.implicits._
+        //
+        val begin = System.currentTimeMillis()
+
+        val df = rdd.toDF()
+        //     写入 Mysql
+        df.write.mode(saveMode).jdbc(url, table, prop)
+        val count = df.count()
+        val end = System.currentTimeMillis()
+
+        logger.info(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
     }
-  val prop = new Properties()
-  prop.put("driver", sparkConf.get("spark.sink.mysql.driver", "com.mysql.jdbc.Driver"))
-  prop.put("dbtable", sparkConf.get("spark.sink.mysql.dbtable"))
-  prop.put("user", sparkConf.get("spark.sink.mysql.user"))
-  prop.put("password", sparkConf.get("spark.sink.mysql.password"))
 
-
-  /**
-    * 输出 到 Mysql
-    *
-    * @param rdd
-    * @param time
-    */
-  override def output(rdd: RDD[T], time: Time): Unit = {
-    val sqlContext = SparkSession.builder().getOrCreate().sqlContext
-    import sqlContext.implicits._
-    //
-    val begin = System.currentTimeMillis()
-
-    val df = rdd.toDF()
-    //     写入 Mysql
-    df.write.mode(saveMode).jdbc(url, table, prop)
-    val count = df.count()
-    val end = System.currentTimeMillis()
-
-    logger.info(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
-  }
-
-  override val paramPrefix = "spark.sink.es.mysql."
+    override val paramPrefix = "spark.sink.es.mysql."
 }
 

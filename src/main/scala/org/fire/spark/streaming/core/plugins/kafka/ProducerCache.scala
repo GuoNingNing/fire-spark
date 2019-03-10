@@ -11,7 +11,7 @@ import scala.collection.mutable
   */
 object ProducerCache {
 
-  private val producers = new mutable.HashMap[Properties, Any]()
+  @transient private val producers = new mutable.HashMap[Properties, Any]()
 
   def getProducer[K, V](config: Properties): Producer[K, V] = {
     producers.getOrElse(config, {

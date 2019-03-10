@@ -11,11 +11,11 @@ import org.apache.hadoop.mapred.lib.MultipleTextOutputFormat
   */
 class FireTextOutputFormat extends MultipleTextOutputFormat[Any, Any] {
 
-  override def generateFileNameForKeyValue(key: Any, value: Any, name: String): String = {
-    s"${key}_$name"
-  }
+    override def generateFileNameForKeyValue(key: Any, value: Any, name: String): String = {
+        s"${key}_$name"
+    }
 
-  override def generateActualKey(key: Any, value: Any): AnyRef = {
-    null
-  }
+    override def generateActualKey(key: Any, value: Any): AnyRef = {
+        null
+    }
 }

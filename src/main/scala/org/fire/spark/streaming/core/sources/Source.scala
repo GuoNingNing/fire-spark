@@ -1,8 +1,8 @@
 package org.fire.spark.streaming.core.sources
 
+import org.apache.spark.SparkConf
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.SparkConf
 import org.slf4j.LoggerFactory
 
 import scala.annotation.meta.getter
@@ -14,20 +14,20 @@ import scala.reflect.ClassTag
   * 源
   */
 trait Source extends Serializable {
-  lazy val logger = LoggerFactory.getLogger(getClass)
-  @(transient @getter)
-  val ssc: StreamingContext
-  @(transient @getter)
-  lazy val sparkConf: SparkConf = ssc.sparkContext.getConf
+    lazy val logger = LoggerFactory.getLogger(getClass)
+    @(transient@getter)
+    val ssc: StreamingContext
+    @(transient@getter)
+    lazy val sparkConf: SparkConf = ssc.sparkContext.getConf
 
-  val paramPrefix: String
+    val paramPrefix: String
 
-  type SourceType
+    type SourceType
 
-  /**
-    * 获取DStream 流
-    *
-    * @return
-    */
-  def getDStream[R: ClassTag](messageHandler: SourceType => R): DStream[R]
+    /**
+      * 获取DStream 流
+      *
+      * @return
+      */
+    def getDStream[R: ClassTag](messageHandler: SourceType => R): DStream[R]
 }

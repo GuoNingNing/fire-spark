@@ -5,7 +5,7 @@ import java.util.{Properties, UUID}
 import kafka.producer.KeyedMessage
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.streaming.{StreamingContext, Time}
+import org.apache.spark.streaming.Time
 import org.fire.spark.streaming.core.plugins.kafka.KafkaWriter._
 
 import scala.reflect.ClassTag
@@ -16,23 +16,23 @@ import scala.reflect.ClassTag
   * 输出到kafka
   */
 class KafkaSink[T: ClassTag](val sc: SparkContext)
-  extends Sink[T] {
+        extends Sink[T] {
 
-  private val producerConf = new Properties()
-  producerConf.put("serializer.class", "kafka.serializer.DefaultEncoder")
-  producerConf.put("key.serializer.class", "kafka.serializer.StringEncoder")
-  producerConf.put("metadata.broker.list", sparkConf.get("spark.sink.kafka.metadata.broker.list"))
+    private val producerConf = new Properties()
+    producerConf.put("serializer.class", "kafka.serializer.DefaultEncoder")
+    producerConf.put("key.serializer.class", "kafka.serializer.StringEncoder")
+    producerConf.put("metadata.broker.list", sparkConf.get("spark.sink.kafka.metadata.broker.list"))
 
-  private val outputTopic = sparkConf.get("spark.sink.kafka.topic")
+    private val outputTopic = sparkConf.get("spark.sink.kafka.topic")
 
-  /**
-    * 以字符串的形式输出到kafka
-    *
-    */
-  override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
+    /**
+      * 以字符串的形式输出到kafka
+      *
+      */
+    override def output(rdd: RDD[T], time: Time = Time(System.currentTimeMillis())): Unit = {
 
-    rdd.writeToKafka(producerConf, x => new KeyedMessage[String, Array[Byte]](outputTopic, UUID.randomUUID().toString, x.toString.getBytes()))
-  }
+        rdd.writeToKafka(producerConf, x => new KeyedMessage[String, Array[Byte]](outputTopic, UUID.randomUUID().toString, x.toString.getBytes()))
+    }
 
-  override val paramPrefix = "spark.sink.kafka."
+    override val paramPrefix = "spark.sink.kafka."
 }

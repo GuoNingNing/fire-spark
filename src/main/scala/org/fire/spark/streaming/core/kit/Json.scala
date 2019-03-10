@@ -11,18 +11,18 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
   * Created by cloud on 18/2/1.
   */
 object Json {
-  private val mapper = new ObjectMapper() with ScalaObjectMapper
-  mapper.registerModule(DefaultScalaModule)
-  mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-  mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    private val mapper = new ObjectMapper() with ScalaObjectMapper
+    mapper.registerModule(DefaultScalaModule)
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
-  def parse[T](str: String)(implicit manifest: Manifest[T]) = {
-    mapper.readValue[T](str)
-  }
+    def parse[T](str: String)(implicit manifest: Manifest[T]) = {
+        mapper.readValue[T](str)
+    }
 
-  def generate(obj: AnyRef): String = {
-    val out = new StringWriter
-    mapper.writeValue(out, obj)
-    out.toString
-  }
+    def generate(obj: AnyRef): String = {
+        val out = new StringWriter
+        mapper.writeValue(out, obj)
+        out.toString
+    }
 }

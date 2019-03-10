@@ -20,25 +20,27 @@ object RedisInfo {
 
     // 信息数据存放map
     private val infoMap = mutable.Map[String, String]()
-    val a = mutable.Map(("1", "1"),("2", "2"))
+    val a = mutable.Map(("1", "1"), ("2", "2"))
 
 
     /**
       * 将关键信息存入
+      *
       * @param key
       * @param value
       * @return
       */
-    def putValue(key:String, value:String) = {
+    def putValue(key: String, value: String) = {
         infoMap.put(key, value)
     }
 
     /**
       * 获取map中的数据
+      *
       * @param key
       * @return
       */
-    def getValue(key:String):Option[String] = {
+    def getValue(key: String): Option[String] = {
         infoMap.get(key)
     }
 
@@ -47,38 +49,41 @@ object RedisInfo {
       */
     def clear() = {
         infoMap.clear()
-        redis_key=""
+        redis_key = ""
     }
 
     /**
       * 设置公共前缀
+      *
       * @param prefix
       */
-    def setPrefix(prefix:String) = {
+    def setPrefix(prefix: String) = {
         redis_key = prefix
     }
 
     /**
       * 设置超时时间
+      *
       * @param timeout
       */
-    def setTimeout(timeout:Int) = {
+    def setTimeout(timeout: Int) = {
         this.timeout = timeout
     }
 
 
-    def showData():Unit = {
+    def showData(): Unit = {
         println(s"redis key:$redis_key")
         println(s"redis value:${JSONObject.toJSONString(infoMap)}")
     }
 
     /**
       * 存写数据
+      *
       * @param host
       * @param port
       * @param password
       */
-    def storeData(host:String,port:Int, password:String) = {
+    def storeData(host: String, port: Int, password: String) = {
         val redisPoint = RedisEndpoint(host, port, password)
         val pool = RedisConnectionPool.connect(redisPoint)
 

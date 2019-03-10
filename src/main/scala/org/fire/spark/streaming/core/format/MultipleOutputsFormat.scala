@@ -15,9 +15,9 @@ import org.apache.hadoop.util.Progress
   * Created by guoning on 2017/5/31.
   */
 object MultipleOutputsFormat {
-  // Type inference fails with this inlined in constructor parameters
-  private def defaultMultipleOutputsMaker[K, V](io: TaskInputOutputContext[_, _, K, V])
-  : MultipleOutputer[K, V] = new MultipleOutputs[K, V](io)
+    // Type inference fails with this inlined in constructor parameters
+    private def defaultMultipleOutputsMaker[K, V](io: TaskInputOutputContext[_, _, K, V])
+    : MultipleOutputer[K, V] = new MultipleOutputs[K, V](io)
 }
 
 /**
@@ -39,100 +39,100 @@ object MultipleOutputsFormat {
 abstract class MultipleOutputsFormat[K, V](outputFormat: OutputFormat[K, V],
                                            multipleOutputsMaker: TaskInputOutputContext[_, _, K, V] => MultipleOutputer[K, V] =
                                            (r: TaskInputOutputContext[_, _, K, V]) => MultipleOutputsFormat.defaultMultipleOutputsMaker[K, V](r))
-  extends OutputFormat[(String, K), V] {
-  /**
-    * Check for validity of the output-specification for the job.
-    *
-    * <p>This is to validate the output specification for the job when it is
-    * a job is submitted.  Typically checks that it does not already exist,
-    * throwing an exception when it already exists, so that output is not
-    * overwritten.</p>
-    *
-    * @param context information about the job
-    * @throws IOException when output should not be attempted
-    */
-  override def checkOutputSpecs(context: JobContext): Unit = outputFormat.checkOutputSpecs(context)
+        extends OutputFormat[(String, K), V] {
+    /**
+      * Check for validity of the output-specification for the job.
+      *
+      * <p>This is to validate the output specification for the job when it is
+      * a job is submitted.  Typically checks that it does not already exist,
+      * throwing an exception when it already exists, so that output is not
+      * overwritten.</p>
+      *
+      * @param context information about the job
+      * @throws IOException when output should not be attempted
+      */
+    override def checkOutputSpecs(context: JobContext): Unit = outputFormat.checkOutputSpecs(context)
 
-  /**
-    * Get the output committer for this output format. This is responsible
-    * for ensuring the output is committed correctly.
-    *
-    * @param context the task context
-    * @return an output committer
-    * @throws IOException
-    * @throws InterruptedException
-    */
-  override def getOutputCommitter(context: TaskAttemptContext): OutputCommitter = outputFormat
-    .getOutputCommitter(context)
+    /**
+      * Get the output committer for this output format. This is responsible
+      * for ensuring the output is committed correctly.
+      *
+      * @param context the task context
+      * @return an output committer
+      * @throws IOException
+      * @throws InterruptedException
+      */
+    override def getOutputCommitter(context: TaskAttemptContext): OutputCommitter = outputFormat
+            .getOutputCommitter(context)
 
-  /**
-    * Get the {@link RecordWriter} for the given task.
-    *
-    * @param context the information about the current task.
-    * @return a { @link RecordWriter} to write the output for the job.
-    * @throws IOException
-    */
-  override def getRecordWriter(context: TaskAttemptContext) =
-    new RecordWriter[(String, K), V] {
+    /**
+      * Get the {@link RecordWriter} for the given task.
+      *
+      * @param context the information about the current task.
+      * @return a { @link RecordWriter} to write the output for the job.
+      * @throws IOException
+      */
+    override def getRecordWriter(context: TaskAttemptContext) =
+        new RecordWriter[(String, K), V] {
 
-      val job: Job = Job.getInstance(context.getConfiguration)
-      // 使用懒惰设置底层输出格式输出
-      LazyOutputFormat.setOutputFormatClass(job, outputFormat.getClass)
-      // 我们通过ReduceContext大多数字段dummied-out因为他们不会使用的上下文
-      // of Spark's saveAs*Hadoop* methods
-      val ioContext = new ReduceContextImpl(job.getConfiguration, context.getTaskAttemptID,
-        new DummyIterator, new GenericCounter, new GenericCounter,
-        new DummyRecordWriter, new DummyOutputCommitter, new DummyReporter, null,
-        classOf[NullWritable], classOf[NullWritable])
+            val job: Job = Job.getInstance(context.getConfiguration)
+            // 使用懒惰设置底层输出格式输出
+            LazyOutputFormat.setOutputFormatClass(job, outputFormat.getClass)
+            // 我们通过ReduceContext大多数字段dummied-out因为他们不会使用的上下文
+            // of Spark's saveAs*Hadoop* methods
+            val ioContext = new ReduceContextImpl(job.getConfiguration, context.getTaskAttemptID,
+                new DummyIterator, new GenericCounter, new GenericCounter,
+                new DummyRecordWriter, new DummyOutputCommitter, new DummyReporter, null,
+                classOf[NullWritable], classOf[NullWritable])
 
-      val multipleOutputs: MultipleOutputer[K, V] = multipleOutputsMaker(ioContext)
+            val multipleOutputs: MultipleOutputer[K, V] = multipleOutputsMaker(ioContext)
 
-      /**
-        * Writes a keys/value pair.
-        *
-        * @param keys  the key to write.
-        * @param value the value to write.
-        * @throws IOException
-        */
-      override def write(keys: (String, K), value: V): Unit = {
-        keys match {
-          case (path, key) =>
-            multipleOutputs.write(key, value, path)
+            /**
+              * Writes a keys/value pair.
+              *
+              * @param keys  the key to write.
+              * @param value the value to write.
+              * @throws IOException
+              */
+            override def write(keys: (String, K), value: V): Unit = {
+                keys match {
+                    case (path, key) =>
+                        multipleOutputs.write(key, value, path)
+                }
+            }
+
+            override def close(context: TaskAttemptContext): Unit = multipleOutputs.close()
         }
-      }
 
-      override def close(context: TaskAttemptContext): Unit = multipleOutputs.close()
+
+    private class DummyOutputCommitter extends OutputCommitter {
+        override def setupJob(jobContext: JobContext): Unit = ()
+
+        override def needsTaskCommit(taskContext: TaskAttemptContext): Boolean = false
+
+        override def setupTask(taskContext: TaskAttemptContext): Unit = ()
+
+        override def commitTask(taskContext: TaskAttemptContext): Unit = ()
+
+        override def abortTask(taskContext: TaskAttemptContext): Unit = ()
     }
 
+    private class DummyRecordWriter extends RecordWriter[K, V] {
+        override def write(key: K, value: V): Unit = ()
 
-  private class DummyOutputCommitter extends OutputCommitter {
-    override def setupJob(jobContext: JobContext): Unit = ()
+        override def close(context: TaskAttemptContext): Unit = ()
+    }
 
-    override def needsTaskCommit(taskContext: TaskAttemptContext): Boolean = false
+    private class DummyIterator extends RawKeyValueIterator {
+        override def getKey: DataInputBuffer = null
 
-    override def setupTask(taskContext: TaskAttemptContext): Unit = ()
+        override def getValue: DataInputBuffer = null
 
-    override def commitTask(taskContext: TaskAttemptContext): Unit = ()
+        override def getProgress: Progress = null
 
-    override def abortTask(taskContext: TaskAttemptContext): Unit = ()
-  }
+        override def close(): Unit = ()
 
-  private class DummyRecordWriter extends RecordWriter[K, V] {
-    override def write(key: K, value: V): Unit = ()
-
-    override def close(context: TaskAttemptContext): Unit = ()
-  }
-
-  private class DummyIterator extends RawKeyValueIterator {
-    override def getKey: DataInputBuffer = null
-
-    override def getValue: DataInputBuffer = null
-
-    override def getProgress: Progress = null
-
-    override def close(): Unit = ()
-
-    override def next: Boolean = true
-  }
+        override def next: Boolean = true
+    }
 
 }

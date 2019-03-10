@@ -1,7 +1,7 @@
 package org.fire.spark.streaming.core.kit
 
 import kafka.common.TopicAndPartition
-import org.apache.spark.streaming.kafka.KafkaManager
+import org.fire.spark.streaming.core.plugins.kafka.KafkaManager
 
 /**
   * Created by guoning on 16/8/4.

@@ -20,30 +20,30 @@ import scala.reflect.ClassTag
   * }}}
   */
 object KafkaWriter {
-  /**
-    * This implicit method allows the user to call dstream.writeToKafka(..)
-    *
-    * @param dstream - DStream to write to Kafka
-    * @tparam T - The type of the DStream
-    * @tparam K - The type of the key to serialize to
-    * @tparam V - The type of the value to serialize to
-    * @return
-    */
-  implicit def createKafkaOutputWriter[T: ClassTag, K, V](dstream: DStream[T]): KafkaWriter[T] = {
-    new DStreamKafkaWriter[T](dstream)
-  }
+    /**
+      * This implicit method allows the user to call dstream.writeToKafka(..)
+      *
+      * @param dstream - DStream to write to Kafka
+      * @tparam T - The type of the DStream
+      * @tparam K - The type of the key to serialize to
+      * @tparam V - The type of the value to serialize to
+      * @return
+      */
+    implicit def createKafkaOutputWriter[T: ClassTag, K, V](dstream: DStream[T]): KafkaWriter[T] = {
+        new DStreamKafkaWriter[T](dstream)
+    }
 
-  implicit def createKafkaOutputWriter[T: ClassTag, K, V](rdd: RDD[T]): KafkaWriter[T] = {
-    new RDDKafkaWriter[T](rdd)
-  }
+    implicit def createKafkaOutputWriter[T: ClassTag, K, V](rdd: RDD[T]): KafkaWriter[T] = {
+        new RDDKafkaWriter[T](rdd)
+    }
 
-  implicit def createKafkaOutputWriter[T: ClassTag, K, V](msg: Iterator[T]): KafkaWriter[T] = {
-    new IterKafkaWrite[T](msg)
-  }
+    implicit def createKafkaOutputWriter[T: ClassTag, K, V](msg: Iterator[T]): KafkaWriter[T] = {
+        new IterKafkaWrite[T](msg)
+    }
 
-  implicit def createKafkaOutputWriter[T: ClassTag, K, V](msg: T): KafkaWriter[T] = {
-    new SimpleKafkaWrite[T](msg)
-  }
+    implicit def createKafkaOutputWriter[T: ClassTag, K, V](msg: T): KafkaWriter[T] = {
+        new SimpleKafkaWrite[T](msg)
+    }
 }
 
 /**
@@ -74,20 +74,20 @@ object KafkaWriter {
   */
 abstract class KafkaWriter[T: ClassTag]() {
 
-  /**
-    * To write data from a DStream to Kafka, call this function after creating the DStream. Once
-    * the DStream is passed into this function, all data coming from the DStream is written out to
-    * Kafka. The properties instance takes the configuration required to connect to the Kafka
-    * brokers in the standard Kafka format. The serializerFunc is a function that converts each
-    * element of the RDD to a Kafka [[KeyedMessage]]. This closure should be serializable - so it
-    * should use only instances of Serializables.
-    *
-    * @param producerConfig The configuration that can be used to connect to Kafka
-    * @param serializerFunc The function to convert the data from the stream into Kafka
-    *                       [[KeyedMessage]]s.
-    * @tparam K The type of the key
-    * @tparam V The type of the value
-    *
-    */
-  def writeToKafka[K, V](producerConfig: Properties, serializerFunc: T => KeyedMessage[K, V]): Unit
+    /**
+      * To write data from a DStream to Kafka, call this function after creating the DStream. Once
+      * the DStream is passed into this function, all data coming from the DStream is written out to
+      * Kafka. The properties instance takes the configuration required to connect to the Kafka
+      * brokers in the standard Kafka format. The serializerFunc is a function that converts each
+      * element of the RDD to a Kafka [[KeyedMessage]]. This closure should be serializable - so it
+      * should use only instances of Serializables.
+      *
+      * @param producerConfig The configuration that can be used to connect to Kafka
+      * @param serializerFunc The function to convert the data from the stream into Kafka
+      *                       [[KeyedMessage]]s.
+      * @tparam K The type of the key
+      * @tparam V The type of the value
+      *
+      */
+    def writeToKafka[K, V](producerConfig: Properties, serializerFunc: T => KeyedMessage[K, V]): Unit
 }
