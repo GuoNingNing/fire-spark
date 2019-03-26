@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 base=$(cd $(dirname $0);pwd)
+PID=$$
 
 function my_include(){
     local f=${1:-"$HOME/.bash_profile"}
@@ -128,7 +129,7 @@ function set_conf_dir(){
 
 function check_once(){
 	local app_name=$1
-	local pid=$$
+	local pid=$PID
 	if test -f $app_name && kill -0 $(cat $app_name) >/dev/null 2>&1;then
 		echo "run.sh already running. pid is $(cat $app_name)" >&2
 		exit 2;
@@ -138,11 +139,12 @@ function check_once(){
 
 function clear_once(){
 	local app_name=$1
-	local pid=$$
+	local pid=$PID
 	while :
 	do
 		if ! kill -0 $pid >/dev/null 2>&1;then
 			rm -rf $app_name
+			break
 		fi
 		sleep 1
 	done
