@@ -12,12 +12,22 @@ import scala.util.{Success, Try}
   */
 object TableMonitor {
 
+
+
 }
 
 
 class TableMonitor(spark:SparkSession,
                   day:String
                   ) {
+
+    /**
+      * 默认是昨天的日期
+      * @param spark
+      * @return
+      */
+    def this(spark:SparkSession) = this(spark,DateUtil.getYesterdayDate())
+
 
     var msg_text:String = ""
 
@@ -39,6 +49,11 @@ class TableMonitor(spark:SparkSession,
     }
 
 
+    /**
+      * 删除分区sql执行语句
+      * @param sql
+      * @return
+      */
     def deletePartitionsImpl(sql:String) = {
 
         println(s"DeletePartitionsImpl sql:$sql")
@@ -142,11 +157,12 @@ class TableMonitor(spark:SparkSession,
       *
       * @param table_list
       */
-    def monitorOne(table_list:List[Map[String,String]]) = {
+    def monitorTableList(table_list:List[Map[String,String]]) = {
 
         // 清空消息
         msg_text = ""
 
+        // 如果item中带有日期，则以带入的日期为准
         val check_list = table_list.map(item => {
 
             val temp_item = Map(
@@ -163,4 +179,18 @@ class TableMonitor(spark:SparkSession,
         unusualDataCheck(check_list)
     }
 
+
+    /**
+      *
+      * @param table
+      * @param partition
+      */
+    def monitorOneTable(table:String, partition:String="ymd") = {
+
+        val item = Map(
+            "table" -> table,
+            "partition" -> partition
+        )
+        monitorTableList(List(item))
+    }
 }
