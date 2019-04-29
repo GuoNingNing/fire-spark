@@ -17,9 +17,7 @@ object TableMonitor {
 }
 
 
-class TableMonitor(spark:SparkSession,
-                  day:String
-                  ) {
+class TableMonitor(val spark:SparkSession, var day:String) {
 
     /**
       * 默认是昨天的日期
@@ -28,7 +26,17 @@ class TableMonitor(spark:SparkSession,
       */
     def this(spark:SparkSession) = this(spark,DateUtil.getYesterdayDate())
 
+    /**
+      * 更新日期
+      * @param d
+      * @return
+      */
+    def setDay(d:String):TableMonitor = {
+        day = d
+        this
+    }
 
+    // 文本消息
     var msg_text:String = ""
 
     def monitorOneImpl(info: Map[String, String]):Long = {
@@ -54,7 +62,7 @@ class TableMonitor(spark:SparkSession,
       * @param sql
       * @return
       */
-    def deletePartitionsImpl(sql:String) = {
+    def sqlExecImpl(sql:String) = {
 
         println(s"DeletePartitionsImpl sql:$sql")
         spark.sql(sql)
@@ -73,6 +81,10 @@ class TableMonitor(spark:SparkSession,
                 .toList
     }
 
+    /**
+      * 删除分区操作
+      * @param info
+      */
     def deletePartitions(info:Map[String,String]): Unit = {
 
         try {
@@ -93,7 +105,7 @@ class TableMonitor(spark:SparkSession,
                     .filter(x => x < before_day)
                     .foreach(d => {
                         val delete_sql = s"alter table $table drop if exists partition($partition=$d)"
-                        deletePartitionsImpl(delete_sql)
+                        sqlExecImpl(delete_sql)
                     })
         } catch {
             case ex:Exception => {
@@ -104,7 +116,12 @@ class TableMonitor(spark:SparkSession,
 
 
     /**
-      *
+      * spark.dingding.url
+      * spark.dingding.phone
+      * spark.email.subject
+      * spark.email.to
+      * spark.email.password
+      * spark.email.server
       * @param info
       */
     def sendMessage(info:Map[String,String]=Map[String,String]()) = {
@@ -146,9 +163,9 @@ class TableMonitor(spark:SparkSession,
             val threshold_num = x.getOrElse("threshold", "0").trim.toLong
             x.getOrElse("sum", "0").trim.toLong <= threshold_num
         })
-                .map(x => {
-                    s"table:${x.getOrElse("table", "")}  count:${x.getOrElse("sum", "0").toString}"
-                })
+        .map(x => {
+            s"table:${x.getOrElse("table", "")}  count:${x.getOrElse("sum", "0").toString}"
+        })
 
         if (res_list.nonEmpty) {
             this.msg_text =
@@ -164,7 +181,7 @@ class TableMonitor(spark:SparkSession,
       *
       * @param table_list
       */
-    def monitorTableList(table_list:List[Map[String,String]]) = {
+    def monitorTableList(table_list:List[Map[String,String]]): TableMonitor = {
 
         // 清空消息
         this.msg_text = ""
@@ -185,6 +202,7 @@ class TableMonitor(spark:SparkSession,
         })
         unusualDataCheck(check_list)
         sendMessage()
+        this
     }
 
 
