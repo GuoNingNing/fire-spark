@@ -193,6 +193,5 @@ class TableMonitor(spark:SparkSession,
             "partition" -> partition
         )
         monitorTableList(List(item))
-        sendMessage()
     }
 }
