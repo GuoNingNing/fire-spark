@@ -113,6 +113,13 @@ class TableMonitor(spark:SparkSession,
             val conf = spark.sparkContext.getConf
             val dd_url = info.getOrElse("dd_url", conf.get("spark.dingding.url",""))
             val at = info.getOrElse("phone", conf.get("spark.dingding.phone", ""))
+            println(
+                s"""
+                  |dd_url:$dd_url
+                  |at:$at
+                  |msg_text:${this.msg_text}
+                """.stripMargin)
+
             if (this.msg_text.length > 0) {
                 send a Ding(dd_url, at, this.msg_text.replace("</p>", "\n"))
                 send a EMail(
@@ -160,7 +167,7 @@ class TableMonitor(spark:SparkSession,
     def monitorTableList(table_list:List[Map[String,String]]) = {
 
         // 清空消息
-        msg_text = ""
+        this.msg_text = ""
 
         // 如果item中带有日期，则以带入的日期为准
         val check_list = table_list.map(item => {
