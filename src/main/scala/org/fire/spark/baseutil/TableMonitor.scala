@@ -107,7 +107,7 @@ class TableMonitor(spark:SparkSession,
       *
       * @param info
       */
-    def sendMessage(info:Map[String,String]) = {
+    def sendMessage(info:Map[String,String]=Map[String,String]()) = {
 
         try {
             val conf = spark.sparkContext.getConf
@@ -177,6 +177,7 @@ class TableMonitor(spark:SparkSession,
             temp_item ++ Map("sum" -> sum.toString)
         })
         unusualDataCheck(check_list)
+        sendMessage()
     }
 
 
@@ -192,5 +193,6 @@ class TableMonitor(spark:SparkSession,
             "partition" -> partition
         )
         monitorTableList(List(item))
+        sendMessage()
     }
 }
