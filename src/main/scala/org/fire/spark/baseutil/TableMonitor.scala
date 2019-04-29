@@ -211,7 +211,7 @@ class TableMonitor(val spark:SparkSession, var day:String) {
       * @param table
       * @param partition
       */
-    def monitorOneTable(table:String, partition:String="ymd") = {
+    def monitorOneTable(table:String, partition:String="ymd"): TableMonitor = {
 
         val item = Map(
             "table" -> table,
