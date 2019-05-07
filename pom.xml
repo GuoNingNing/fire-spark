@@ -77,7 +77,7 @@
         <!-- ES -->
         <dependency>
             <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch-spark-13_${scala.binary.version}</artifactId>
+            <artifactId>elasticsearch-spark-20_${scala.binary.version}</artifactId>
             <version>${es.version}</version>
         </dependency>
         <!--zkClient-->
