@@ -5,6 +5,7 @@ import javax.mail.{Authenticator, PasswordAuthentication}
 
 import com.solarmosaic.client.mail.EnvelopeWrappers
 import com.solarmosaic.client.mail.content.ContentType.MultipartTypes
+import org.apache.spark.SparkConf
 
 /**
   * Created by guoning on 2017/6/6.
@@ -32,6 +33,56 @@ package object Notice {
         override def getPasswordAuthentication(): PasswordAuthentication = {
             new PasswordAuthentication(user, password)
         }
+    }
+
+    /**
+      * 发送通知消息
+      * @param conf
+      * @param info
+      */
+    def sendMessage(conf: SparkConf,
+                    info:Map[String,String]=Map[String,String]()): Unit = {
+
+        val dd_url = info.getOrElse("dd_url", conf.get("spark.dingding.url",""))
+        val at = info.getOrElse("phone", conf.get("spark.dingding.phone", ""))
+
+        try {
+
+            val message = info("message").toString
+
+            println(
+                s"""
+                   |dd_url:$dd_url
+                   |at:$at
+                   |message:$message
+                """.stripMargin)
+
+            if (message.length > 0) {
+                send a Ding(dd_url, at, message.replace("</p>", "\n"))
+                send a EMail(
+                    to = conf.get("spark.email.to","") ,
+                    subject = s"${conf.get("spark.email.subject", "离线数据表异常")}",
+                    message = message,
+                    user = conf.get("spark.email.user",""),
+                    password = conf.get("spark.email.password",""),
+                    addr = conf.get("spark.email.server",""),
+                    subtype = "html"
+                )
+            }
+        } catch {
+            case ex:Exception => {
+
+                val errMsg =
+                    s"""
+                      | info:$info
+                      | message:${ex.getMessage}
+                      | stack:${ex.getStackTrace.map(_.toString).mkString("</p>")}
+                    """.stripMargin
+                println(s"send_message exception:${errMsg}")
+                send a Ding(dd_url, at, errMsg.replace("</p>", "\n"))
+            }
+        }
+
     }
 
     object send extends EnvelopeWrappers {
