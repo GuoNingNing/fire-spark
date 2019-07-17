@@ -2,7 +2,7 @@ package org.fire.spark.streaming.core
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.streaming.{JobInfoReportListener, Seconds, StreamingContext}
+import org.apache.spark.streaming.{JobInfoReportListener, Milliseconds, Seconds, StreamingContext}
 import org.fire.spark.streaming.core.kit.Utils
 
 import scala.annotation.meta.getter
@@ -111,8 +111,14 @@ trait FireStreaming {
         sparkSession = SparkSession.builder().config(sparkConf).enableHiveSupport().getOrCreate()
 
         // 时间间隔
-        val slide = sparkConf.get("spark.batch.duration").toInt
-        val ssc = new StreamingContext(sparkSession.sparkContext, Seconds(slide))
+        val slide = sparkConf.get("spark.batch.duration").toDouble
+
+        val batchTime = if (slide >= 1.0) {
+            Seconds(slide.toInt)
+        } else {
+            Milliseconds((slide * 1000).toInt)
+        }
+        val ssc = new StreamingContext(sparkSession.sparkContext, batchTime)
 
         handle(addSparkStreamingListeners(ssc, sparkConf.get("spark.user.extraListeners", "")))
         ssc
