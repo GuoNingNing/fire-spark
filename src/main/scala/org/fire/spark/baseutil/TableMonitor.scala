@@ -37,8 +37,13 @@ class TableMonitor(val spark:SparkSession, var day:String) {
     }
 
     // 文本消息
-    var msg_text:String = ""
+    var msgText:String = ""
 
+    /**
+      *
+      * @param info
+      * @return
+      */
     def monitorOneImpl(info: Map[String, String]):Long = {
 
         println(s"info$info")
@@ -46,7 +51,11 @@ class TableMonitor(val spark:SparkSession, var day:String) {
         val day = info("day")
         val table = info("table")
 
-        val sql = s"select count(*) as sum from $table where $partition = $day"
+        val sql = partition match {
+            case "no" => s"select count(*) as sum from $table"
+            case _ => s"select count(*) as sum from $table where $partition = $day"
+        }
+
         println(s"sql:$sql")
 
         val sum = spark.sql(sql).head().getAs("sum").toString.toLong
@@ -64,13 +73,18 @@ class TableMonitor(val spark:SparkSession, var day:String) {
       */
     def sqlExecImpl(sql:String) = {
 
-        println(s"DeletePartitionsImpl sql:$sql")
+        println(s"deletePartitionsImpl sql:$sql")
         spark.sql(sql)
     }
 
+    /**
+      * 获取当前表的所有分区
+      * @param sql
+      * @return
+      */
     def getTablePartitions(sql:String):List[String] = {
 
-        println(s"GetTablePartitions sql:$sql")
+        println(s"getTablePartitions sql:$sql")
         spark.sql(sql).printSchema()
         spark.sql(sql).show(1000)
 
@@ -91,21 +105,21 @@ class TableMonitor(val spark:SparkSession, var day:String) {
             val partition = info.getOrElse("partition", "ymd")
             val day = info("day")
             val table = info("table")
-            val before_len = info.getOrElse("before_len", "0").trim.toInt
+            val beforeLen = info.getOrElse("before_len", "0").trim.toInt
 
-            if (before_len < 1) return
+            if (beforeLen < 1) return
 
-            val before_day = DateUtil.getCareDateBeforeDate(day, before_len)
-            val show_partitions_sql = s"show partitions $table"
-            val partitions = getTablePartitions(show_partitions_sql)
+            val beforeDay = DateUtil.getCareDateBeforeDate(day, beforeLen)
+            val showPartitionsSql = s"show partitions $table"
+            val partitions = getTablePartitions(showPartitionsSql)
 
-            println(s"before_day:$before_day  partitions:${partitions.mkString(",")}")
+            println(s"beforeDay:$beforeDay  partitions:${partitions.mkString(",")}")
 
             partitions
-                    .filter(x => x < before_day)
+                    .filter(x => x < beforeDay)
                     .foreach(d => {
-                        val delete_sql = s"alter table $table drop if exists partition($partition=$d)"
-                        sqlExecImpl(delete_sql)
+                        val deleteSql = s"alter table $table drop if exists partition($partition=$d)"
+                        sqlExecImpl(deleteSql)
                     })
         } catch {
             case ex:Exception => {
@@ -128,21 +142,21 @@ class TableMonitor(val spark:SparkSession, var day:String) {
 
         try {
             val conf = spark.sparkContext.getConf
-            val dd_url = info.getOrElse("dd_url", conf.get("spark.dingding.url",""))
+            val ddUrl = info.getOrElse("dd_url", conf.get("spark.dingding.url",""))
             val at = info.getOrElse("phone", conf.get("spark.dingding.phone", ""))
             println(
                 s"""
-                  |dd_url:$dd_url
+                  |dd_url:$ddUrl
                   |at:$at
-                  |msg_text:${this.msg_text}
+                  |msg_text:${this.msgText}
                 """.stripMargin)
 
-            if (this.msg_text.length > 0) {
-                send a Ding(dd_url, at, this.msg_text.replace("</p>", "\n"))
+            if (this.msgText.length > 0) {
+                send a Ding(ddUrl, at, this.msgText.replace("</p>", "\n"))
                 send a EMail(
                     to = conf.get("spark.email.to","") ,
                     subject = s"$day${conf.get("spark.email.subject", "离线数据表异常")}",
-                    message = this.msg_text,
+                    message = this.msgText,
                     user = conf.get("spark.email.user",""),
                     password = conf.get("spark.email.password",""),
                     addr = conf.get("spark.email.server",""),
@@ -157,21 +171,21 @@ class TableMonitor(val spark:SparkSession, var day:String) {
 
     }
 
-    def unusualDataCheck(info_list:List[Map[String,String]]) = {
+    def unusualDataCheck(infoList:List[Map[String,String]]) = {
 
-        val res_list = info_list.filter(x => {
-            val threshold_num = x.getOrElse("threshold", "0").trim.toLong
-            x.getOrElse("sum", "0").trim.toLong <= threshold_num
+        val resList = infoList.filter(x => {
+            val thresholdNum = x.getOrElse("threshold", "0").trim.toLong
+            x.getOrElse("sum", "0").trim.toLong <= thresholdNum
         })
         .map(x => {
             s"table:${x.getOrElse("table", "")}  count:${x.getOrElse("sum", "0").toString}"
         })
 
-        if (res_list.nonEmpty) {
-            this.msg_text =
+        if (resList.nonEmpty) {
+            this.msgText =
                     s"""
-                       |name:${info_list.head("day")}${spark.sparkContext.getConf.get("spark.email.subject", "离线数据表异常")}</p>
-                       |${res_list.mkString("</p>")}
+                       |name:${infoList.head("day")}${spark.sparkContext.getConf.get("spark.email.subject", "离线数据表异常")}</p>
+                       |${resList.mkString("</p>")}
                 """.stripMargin
         }
     }
@@ -179,28 +193,28 @@ class TableMonitor(val spark:SparkSession, var day:String) {
     /**
       *
       *
-      * @param table_list
+      * @param tableList
       */
-    def monitorTableList(table_list:List[Map[String,String]]): TableMonitor = {
+    def monitorTableList(tableList:List[Map[String,String]]): TableMonitor = {
 
         // 清空消息
-        this.msg_text = ""
+        this.msgText = ""
 
         // 如果item中带有日期，则以带入的日期为准
-        val check_list = table_list.map(item => {
+        val checkList = tableList.map(item => {
 
-            val temp_item = Map(
+            val tempItem = Map(
                 "day" -> day
             ) ++ item
             val sum = Try {
-                monitorOneImpl(temp_item)
+                monitorOneImpl(tempItem)
             } match {
                 case Success(s:Long) => s
                 case _ => 0L
             }
-            temp_item ++ Map("sum" -> sum.toString)
+            tempItem ++ Map("sum" -> sum.toString)
         })
-        unusualDataCheck(check_list)
+        unusualDataCheck(checkList)
         sendMessage()
         this
     }
