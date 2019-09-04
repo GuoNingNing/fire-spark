@@ -16,26 +16,26 @@ import scala.reflect.ClassTag
 @deprecated
 object SparkInternal {
 
-  /**
-    * 这是sparkContext 内部的对应的withScope方法
-    */
-  def withScope[T: ClassTag](sparkContext: SparkContext)(body: => T) = RDDOperationScope.withScope(sparkContext)(body)
+    /**
+      * 这是sparkContext 内部的对应的withScope方法
+      */
+    def withScope[T: ClassTag](sparkContext: SparkContext)(body: => T) = RDDOperationScope.withScope(sparkContext)(body)
 
-  /**
-    * 这是创建一个 spark 内部的MapPartitionsRDD对象的方法
-    */
-  def newMapPartitionsRDD[U: ClassTag, T: ClassTag](prev: RDD[T],
-                                                    f: (TaskContext, Int, Iterator[T]) => Iterator[U],
-                                                    preservesPartitioning: Boolean = false
-                                                   ) = new MapPartitionsRDD[U,T](prev,f,preservesPartitioning)
+    /**
+      * 这是创建一个 spark 内部的MapPartitionsRDD对象的方法
+      */
+    def newMapPartitionsRDD[U: ClassTag, T: ClassTag](prev: RDD[T],
+                                                      f: (TaskContext, Int, Iterator[T]) => Iterator[U],
+                                                      preservesPartitioning: Boolean = false
+                                                     ) = new MapPartitionsRDD[U, T](prev, f, preservesPartitioning)
 
-  /**
-    *
-    * 这是sparkContext 内部的对应的clean方法
-    */
-  def clean[F <: AnyRef](f: F, checkSerializable: Boolean = true): F = {
-    ClosureCleaner.clean(f, checkSerializable)
-    f
-  }
+    /**
+      *
+      * 这是sparkContext 内部的对应的clean方法
+      */
+    def clean[F <: AnyRef](f: F, checkSerializable: Boolean = true): F = {
+        ClosureCleaner.clean(f, checkSerializable)
+        f
+    }
 
 }

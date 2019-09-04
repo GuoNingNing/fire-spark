@@ -10,24 +10,24 @@ import org.apache.spark.SparkConf
   */
 class DefaultOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
 
-  /**
-    * 获取存储的Offset
-    *
-    * @param groupId
-    * @param topics
-    * @return
-    */
-  override def getOffsets(groupId: String, topics: Set[String]): Map[TopicPartition, Long] = {
-    Map.empty[TopicPartition, Long]
-  }
+    /**
+      * 获取存储的Offset
+      *
+      * @param groupId
+      * @param topics
+      * @return
+      */
+    override def getOffsets(groupId: String, topics: Set[String]): Map[TopicPartition, Long] = {
+        Map.empty[TopicPartition, Long]
+    }
 
-  /**
-    * 更新 Offsets
-    *
-    * @param groupId
-    * @param offsetInfos
-    */
-  override def updateOffsets(groupId: String, offsetInfos: Map[TopicPartition, Long]): Unit = {
+    /**
+      * 更新 Offsets
+      *
+      * @param groupId
+      * @param offsetInfos
+      */
+    override def updateOffsets(groupId: String, offsetInfos: Map[TopicPartition, Long]): Unit = {
 
-  }
+    }
 }

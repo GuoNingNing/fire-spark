@@ -22,48 +22,48 @@ import scala.reflect.runtime.universe.TypeTag
   *
   */
 class MysqlSink[T <: scala.Product : ClassTag : TypeTag](@transient override val sc: SparkContext,
-                                                         initParams : Map[String,String] = Map.empty[String,String])
-  extends Sink[T] {
+                                                         initParams: Map[String, String] = Map.empty[String, String])
+    extends Sink[T] {
 
-  private lazy val prop : Properties = {
-    val p = new Properties()
-    p.putAll(param ++ initParams)
-    p
-  }
-
-  override val paramPrefix: String = "spark.sink.mysql."
-
-  private lazy val url = prop.getProperty("url")
-  private lazy val table = prop.getProperty("table")
-
-  private val saveMode =
-    prop.getProperty("saveMode", "append").toLowerCase() match {
-      case "overwrite" => SaveMode.Overwrite
-      case "errorifexists" => SaveMode.ErrorIfExists
-      case "ignore" => SaveMode.Ignore
-      case _ => SaveMode.Append
+    private lazy val prop: Properties = {
+        val p = new Properties()
+        p.putAll(param ++ initParams)
+        p
     }
 
+    override val paramPrefix: String = "spark.sink.mysql."
 
-  /**
-    * 输出 到 Mysql
-    *
-    * @param rdd
-    * @param time
-    */
-  override def output(rdd: RDD[T], time: Time): Unit = {
-    val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
-    import sqlContext.implicits._
-    //
-    val begin = System.currentTimeMillis()
+    private lazy val url = prop.getProperty("url")
+    private lazy val table = prop.getProperty("table")
 
-    val df = rdd.toDF()
-    //     写入 Mysql
-    df.write.mode(saveMode).jdbc(url, table, prop)
-    val count = df.count()
-    val end = System.currentTimeMillis()
+    private val saveMode =
+        prop.getProperty("saveMode", "append").toLowerCase() match {
+            case "overwrite" => SaveMode.Overwrite
+            case "errorifexists" => SaveMode.ErrorIfExists
+            case "ignore" => SaveMode.Ignore
+            case _ => SaveMode.Append
+        }
 
-    logger.info(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
-  }
+
+    /**
+      * 输出 到 Mysql
+      *
+      * @param rdd
+      * @param time
+      */
+    override def output(rdd: RDD[T], time: Time): Unit = {
+        val sqlContext = SQLContextSingleton.getInstance(rdd.sparkContext)
+        import sqlContext.implicits._
+        //
+        val begin = System.currentTimeMillis()
+
+        val df = rdd.toDF()
+        //     写入 Mysql
+        df.write.mode(saveMode).jdbc(url, table, prop)
+        val count = df.count()
+        val end = System.currentTimeMillis()
+
+        logger.info(s"time:[$time] write [$count] events use time ${(end - begin) / 1000} S ")
+    }
 }
 

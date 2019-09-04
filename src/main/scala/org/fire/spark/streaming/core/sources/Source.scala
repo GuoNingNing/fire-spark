@@ -4,7 +4,6 @@ import org.apache.spark.SparkConf
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.fire.spark.streaming.core.Logging
-import org.slf4j.{Logger, LoggerFactory}
 
 import scala.annotation.meta.getter
 import scala.language.postfixOps
@@ -17,28 +16,28 @@ import scala.util.Try
   * 源
   */
 trait Source extends Logging with Serializable {
-  //  lazy val logger: Logger = LoggerFactory.getLogger(getClass)
+    //  lazy val logger: Logger = LoggerFactory.getLogger(getClass)
 
-  @(transient@getter)
-  val ssc: StreamingContext
-  @(transient@getter)
-  lazy val sparkConf: SparkConf = ssc.sparkContext.getConf
+    @(transient@getter)
+    val ssc: StreamingContext
+    @(transient@getter)
+    lazy val sparkConf: SparkConf = ssc.sparkContext.getConf
 
-  val paramPrefix: String
+    val paramPrefix: String
 
-  lazy val param: Map[String, String] = sparkConf.getAll.flatMap {
-    case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) =>
-      Some(k.substring(paramPrefix.length) -> v)
-    case _ => None
-  } toMap
+    lazy val param: Map[String, String] = sparkConf.getAll.flatMap {
+        case (k, v) if k.startsWith(paramPrefix) && Try(v.nonEmpty).getOrElse(false) =>
+            Some(k.substring(paramPrefix.length) -> v)
+        case _ => None
+    } toMap
 
 
-  type SourceType
+    type SourceType
 
-  /**
-    * 获取DStream 流
-    *
-    * @return
-    */
-  def getDStream[R: ClassTag](f: SourceType => R): DStream[R]
+    /**
+      * 获取DStream 流
+      *
+      * @return
+      */
+    def getDStream[R: ClassTag](f: SourceType => R): DStream[R]
 }

@@ -17,38 +17,38 @@ import scala.collection.JavaConversions._
 object HbaseConnPool {
 
 
-  @transient
-  private lazy val pools: ConcurrentHashMap[String, Connection] = new ConcurrentHashMap[String, Connection]()
+    @transient
+    private lazy val pools: ConcurrentHashMap[String, Connection] = new ConcurrentHashMap[String, Connection]()
 
 
-  def connect(params: Map[String, String]): Connection = {
-    val conf: Configuration = HBaseConfiguration.create
-    for ((key, value) <- params) {
-      conf.set(key, value)
-    }
-    connect(conf)
-  }
-
-  /*
-  * spark.hbase.hbase.zookeeper.quorum=ip1,ip2,ip3
-  * spark.hbase.hbase.master=ip:port
-  * */
-  def connect(sparkConf: SparkConf): Connection = {
-
-    val conf: Configuration = HBaseConfiguration.create
-
-    for ((key, value) <- sparkConf.getAllWithPrefix("spark.hbase.")) {
-      conf.set(key, value)
+    def connect(params: Map[String, String]): Connection = {
+        val conf: Configuration = HBaseConfiguration.create
+        for ((key, value) <- params) {
+            conf.set(key, value)
+        }
+        connect(conf)
     }
 
-    connect(conf)
-  }
+    /*
+    * spark.hbase.hbase.zookeeper.quorum=ip1,ip2,ip3
+    * spark.hbase.hbase.master=ip:port
+    * */
+    def connect(sparkConf: SparkConf): Connection = {
 
-  def connect(conf: Configuration): Connection = {
-    val zookeeper = conf.get("hbase.zookeeper.quorum")
-    pools.getOrElseUpdate(zookeeper, ConnectionFactory.createConnection(conf))
-  }
+        val conf: Configuration = HBaseConfiguration.create
 
-  def close(): Unit = pools.foreach { case (k, v) => v.close() }
+        for ((key, value) <- sparkConf.getAllWithPrefix("spark.hbase.")) {
+            conf.set(key, value)
+        }
+
+        connect(conf)
+    }
+
+    def connect(conf: Configuration): Connection = {
+        val zookeeper = conf.get("hbase.zookeeper.quorum")
+        pools.getOrElseUpdate(zookeeper, ConnectionFactory.createConnection(conf))
+    }
+
+    def close(): Unit = pools.foreach { case (k, v) => v.close() }
 
 }
