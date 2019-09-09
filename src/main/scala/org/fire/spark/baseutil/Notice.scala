@@ -90,7 +90,24 @@ package object Notice {
 
         def a(ding: Ding): Unit = {
 
-            val body =
+            // 支持通知所有人
+            val body = if (ding.to.toLowerCase == "all") {
+                s"""
+                   |{
+                   |  "msgtype": "text",
+                   |  "text": {
+                   |    "content": "${ding.message}"
+                   |  },
+                   |  "at": {
+                   |    "atMobiles": [
+                   |
+                   |    ],
+                   |    "isAtAll": true
+                   |  }
+                   |}
+        """.stripMargin
+
+            } else {
                 s"""
                    |{
                    |  "msgtype": "text",
@@ -105,6 +122,8 @@ package object Notice {
                    |  }
                    |}
         """.stripMargin
+            }
+
 
             val headers = Map("content-type" -> "application/json")
             val (code, res) = Utils.httpPost(ding.api, body, headers)
