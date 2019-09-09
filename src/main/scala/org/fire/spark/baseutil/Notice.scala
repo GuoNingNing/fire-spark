@@ -37,13 +37,14 @@ package object Notice {
 
     /**
       * 发送通知消息
+      *
       * @param conf
       * @param info
       */
     def sendMessage(conf: SparkConf,
-                    info:Map[String,String]=Map[String,String]()): Unit = {
+                    info: Map[String, String] = Map[String, String]()): Unit = {
 
-        val dd_url = info.getOrElse("dd_url", conf.get("spark.dingding.url",""))
+        val dd_url = info.getOrElse("dd_url", conf.get("spark.dingding.url", ""))
         val at = info.getOrElse("phone", conf.get("spark.dingding.phone", ""))
 
         try {
@@ -60,23 +61,23 @@ package object Notice {
             if (message.length > 0) {
                 send a Ding(dd_url, at, message.replace("</p>", "\n"))
                 send a EMail(
-                    to = conf.get("spark.email.to","") ,
+                    to = conf.get("spark.email.to", ""),
                     subject = s"${conf.get("spark.email.subject", "离线数据表异常")}",
                     message = message,
-                    user = conf.get("spark.email.user",""),
-                    password = conf.get("spark.email.password",""),
-                    addr = conf.get("spark.email.server",""),
+                    user = conf.get("spark.email.user", ""),
+                    password = conf.get("spark.email.password", ""),
+                    addr = conf.get("spark.email.server", ""),
                     subtype = "html"
                 )
             }
         } catch {
-            case ex:Exception => {
+            case ex: Exception => {
 
                 val errMsg =
                     s"""
-                      | info:$info
-                      | message:${ex.getMessage}
-                      | stack:${ex.getStackTrace.map(_.toString).mkString("</p>")}
+                       | info:$info
+                       | message:${ex.getMessage}
+                       | stack:${ex.getStackTrace.map(_.toString).mkString("</p>")}
                     """.stripMargin
                 println(s"send_message exception:${errMsg}")
                 send a Ding(dd_url, at, errMsg.replace("</p>", "\n"))
@@ -89,7 +90,24 @@ package object Notice {
 
         def a(ding: Ding): Unit = {
 
-            val body =
+            // 支持通知所有人
+            val body = if (ding.to.toLowerCase == "all") {
+                s"""
+                   |{
+                   |  "msgtype": "text",
+                   |  "text": {
+                   |    "content": "${ding.message}"
+                   |  },
+                   |  "at": {
+                   |    "atMobiles": [
+                   |
+                   |    ],
+                   |    "isAtAll": true
+                   |  }
+                   |}
+        """.stripMargin
+
+            } else {
                 s"""
                    |{
                    |  "msgtype": "text",
@@ -104,6 +122,8 @@ package object Notice {
                    |  }
                    |}
         """.stripMargin
+            }
+
 
             val headers = Map("content-type" -> "application/json")
             val (code, res) = Utils.httpPost(ding.api, body, headers)
