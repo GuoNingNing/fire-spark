@@ -74,7 +74,7 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging with
                                                      topics: Set[String]
                                                     ): InputDStream[ConsumerRecord[K, V]] = {
 
-        var consumerOffsets = Map.empty[TopicPartition, Long]
+        var consumerOffsets: Map[TopicPartition, Long] = Map.empty
 
         kafkaParams.get("group.id") match {
             case Some(groupId) =>
@@ -94,9 +94,11 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging with
                 ConsumerStrategies.Assign[K, V](consumerOffsets.keys, kafkaParams, consumerOffsets)
             )
         } else {
+            logInfo(s"read topics ==[$topics]== by  anonymity==")
+
             KafkaUtils.createDirectStream[K, V](ssc,
                 LocationStrategies.PreferConsistent,
-                ConsumerStrategies.Subscribe[K, V](topics, kafkaParams)
+                ConsumerStrategies.Subscribe[K, V](topics, kafkaParams ++ Map("group.id" -> "anonymity"))
             )
         }
 
