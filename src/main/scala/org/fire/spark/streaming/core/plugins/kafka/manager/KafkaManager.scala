@@ -98,7 +98,8 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging with
 
             KafkaUtils.createDirectStream[K, V](ssc,
                 LocationStrategies.PreferConsistent,
-                ConsumerStrategies.Subscribe[K, V](topics, kafkaParams ++ Map("group.id" -> "anonymity"))
+                ConsumerStrategies.Subscribe[K, V](topics, kafkaParams ++ Map("group.id" -> s"anonymity-${System.currentTimeMillis()}"))
+//                ConsumerStrategies.Subscribe[K, V](topics, kafkaParams)
             )
         }
 
