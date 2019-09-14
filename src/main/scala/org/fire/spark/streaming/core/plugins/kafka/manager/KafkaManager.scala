@@ -94,12 +94,14 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging with
                 ConsumerStrategies.Assign[K, V](consumerOffsets.keys, kafkaParams, consumerOffsets)
             )
         } else {
-            logInfo(s"read topics ==[$topics]== by  anonymity==")
+
+            // 匿名消费，生成临时消费组
+            val groupId = kafkaParams.getOrElse("group.id", s"anonymity-${System.currentTimeMillis()}")
+            logInfo(s"read topics ==[$topics]== by  group id ${groupId}==")
 
             KafkaUtils.createDirectStream[K, V](ssc,
                 LocationStrategies.PreferConsistent,
-                ConsumerStrategies.Subscribe[K, V](topics, kafkaParams ++ Map("group.id" -> s"anonymity-${System.currentTimeMillis()}"))
-//                ConsumerStrategies.Subscribe[K, V](topics, kafkaParams)
+                ConsumerStrategies.Subscribe[K, V](topics, kafkaParams ++ Map("group.id" -> groupId))
             )
         }
 
