@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.{ConsumerRecord, KafkaConsumer}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges, OffsetRange}
+import org.fire.spark.streaming.core.kit.Json
 import org.fire.spark.streaming.core.plugins.kafka.manager.KafkaManager
 import org.fire.spark.streaming.core.sources.Source
 
@@ -60,6 +61,9 @@ class KafkaDirectSource[K: ClassTag, V: ClassTag](@transient val ssc: StreamingC
     * @return
     */
   override def getDStream[R: ClassTag](messageHandler: ConsumerRecord[K, V] => R): DStream[R] = {
+
+    println(Json.generate(kafkaParams))
+
     val stream = km.createDirectStream[K, V](ssc, kafkaParams, topicSet)
     canCommitOffsets = stream.asInstanceOf[CanCommitOffsets]
     stream.transform((rdd, time) => {

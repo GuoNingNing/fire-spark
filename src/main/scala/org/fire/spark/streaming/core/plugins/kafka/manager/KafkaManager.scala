@@ -15,10 +15,10 @@ import kafka.consumer.SimpleConsumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.TopicPartition
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext, SparkException}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.streaming.kafka010._
+import org.apache.spark.{SparkConf, SparkContext, SparkException}
 import org.fire.spark.streaming.core.Logging
 import org.fire.spark.streaming.core.kit.Utils
 
@@ -141,7 +141,8 @@ trait OffsetsManager extends Logging with Serializable {
   val sparkConf: SparkConf
 
   lazy val storeParams: Map[String, String] = sparkConf
-    .getAllWithPrefix(s"spark.source.kafka.offset.store.")
+    .getAll.filter(_._1.startsWith("spark.source.kafka.offset.store."))
+    .map { case (k, v) => (k.substring("spark.source.kafka.offset.store.".length), v) }
     .toMap
 
   lazy val storeType: String = storeParams.getOrElse("type", "none")

@@ -37,7 +37,8 @@ object HbaseConnPool {
 
     val conf = HBaseConfiguration.create
 
-    for ((key, value) <- sparkConf.getAllWithPrefix("spark.hbase.")) {
+    val kvs = sparkConf.getAll.filter(_._1.startsWith("spark.hbase.")).map { case (k, v) => (k.substring("spark.hbase.".length), v) }
+    for ((key, value) <- kvs) {
       conf.set(key, value)
     }
 
