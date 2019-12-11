@@ -1,4 +1,4 @@
-package org.fire.spark
+package org.fire.spark.baseutil
 
 import javax.mail.internet.InternetAddress
 import javax.mail.{Authenticator, PasswordAuthentication}

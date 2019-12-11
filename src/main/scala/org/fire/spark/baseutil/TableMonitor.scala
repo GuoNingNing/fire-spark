@@ -1,7 +1,7 @@
 package org.fire.spark.baseutil
 
 import org.apache.spark.sql.{Row, SparkSession}
-import org.fire.spark.Notice.{Ding, EMail, send}
+import org.fire.spark.baseutil.Notice.{Ding, EMail, send}
 
 import scala.util.{Success, Try}
 

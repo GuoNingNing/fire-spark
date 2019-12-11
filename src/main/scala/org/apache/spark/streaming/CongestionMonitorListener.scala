@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.spark.streaming.scheduler._
-import org.fire.spark.Notice.{Ding, send}
+import org.fire.spark.baseutil.Notice.{Ding, send}
 import org.fire.spark.streaming.core.FireConfig
 
 import scala.collection.mutable
