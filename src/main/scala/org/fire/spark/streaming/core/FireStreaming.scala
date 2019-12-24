@@ -108,7 +108,7 @@ trait FireStreaming {
         init(sparkConf)
 
 
-        sparkSession = SparkSession.builder().config(sparkConf).enableHiveSupport().getOrCreate()
+        sparkSession = SparkSession.builder().enableHiveSupport().config(sparkConf).getOrCreate()
 
         // 时间间隔
         val slide = sparkConf.get("spark.batch.duration").toDouble
