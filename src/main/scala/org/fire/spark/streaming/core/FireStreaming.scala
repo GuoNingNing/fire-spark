@@ -105,7 +105,7 @@ trait FireStreaming {
         if (extraListeners != "") sparkConf.set("spark.extraListeners", extraListeners)
 
 
-        sparkSession = SparkSession.builder().config(sparkConf).getOrCreate()
+        sparkSession = SparkSession.builder().enableHiveSupport().config(sparkConf).getOrCreate()
 
         // 时间间隔
         val slide = sparkConf.get("spark.batch.duration").toInt
