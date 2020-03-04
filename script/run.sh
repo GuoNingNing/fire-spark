@@ -48,7 +48,7 @@ function set_jars(){
 	test ! -d "$lib_path" && { echo "lib_path $lib_path not found.">&2;exit; }
 	for jar in $(ls $lib_path)
 	do
-	    if [ "x$jar" != "x$(basename $main_jar)" ]; then
+	    if [ "x$jar" != "x$(basename $main_jar)" ] && [ "${jar##*.}"x = "jar"x ]; then
 	        jars=$lib_path/$jar,$jars
 	    fi
 	done
