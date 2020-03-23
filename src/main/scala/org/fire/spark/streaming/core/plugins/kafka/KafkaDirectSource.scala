@@ -2,7 +2,6 @@ package org.fire.spark.streaming.core.plugins.kafka
 
 import java.util.concurrent.ConcurrentHashMap
 
-import kafka.message.MessageAndMetadata
 import org.apache.kafka.clients.consumer.{ConsumerRecord, KafkaConsumer}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream

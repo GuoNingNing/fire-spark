@@ -4,7 +4,6 @@ package org.apache.spark.streaming
 import java.text.SimpleDateFormat
 import java.util.{Properties, UUID}
 
-import _root_.kafka.producer.KeyedMessage
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark.streaming.kafka010.OffsetRange
 import org.fire.spark.streaming.core.plugins.kafka.writer.KafkaWriter._
