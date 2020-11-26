@@ -7,34 +7,33 @@ import org.fire.spark.streaming.core.plugins.redis.RedisConnectionPool._
 import scala.collection.JavaConversions._
 
 /**
-  * Created by guoning on 2017/10/19.
-  *
-  * Offset 存储到Redis
-  */
+ * Created by guoning on 2017/10/19.
+ *
+ * Offset 存储到Redis
+ */
 private[kafka] class RedisClusterOffsetsManager(val sparkConf: SparkConf) extends OffsetsManager {
+
+  private lazy val jedis = connectForCluster(storeParams)
 
   override def getOffsets(groupId: String, topics: Set[String]): Map[TopicPartition, Long] = {
 
     val earliestOffsets = getEarliestOffsets(topics.toSeq)
 
+    val offsetMap = topics.flatMap(topic => {
+      jedis.hgetAll(generateKey(groupId, topic)).map {
+        case (partition, offset) =>
+          // 如果Offset失效了，则用 earliestOffsets 替代
+          val tp = new TopicPartition(topic, partition.toInt)
 
-    val offsetMap = safeCloseCluster { jedis =>
-      topics.flatMap(topic => {
-        jedis.hgetAll(generateKey(groupId, topic)).map {
-          case (partition, offset) =>
-            // 如果Offset失效了，则用 earliestOffsets 替代
-            val tp = new TopicPartition(topic, partition.toInt)
-
-            val finalOffset = earliestOffsets.get(tp) match {
-              case Some(left) if left > offset.toLong =>
-                logWarning(s"consumer group:$groupId,topic:${tp.topic},partition:${tp.partition} offsets已经过时，更新为: $left")
-                left
-              case _ => offset.toLong
-            }
-            tp -> finalOffset
-        }
-      })
-    }(connectForCluster(storeParams))
+          val finalOffset = earliestOffsets.get(tp) match {
+            case Some(left) if left > offset.toLong =>
+              logWarning(s"consumer group:$groupId,topic:${tp.topic},partition:${tp.partition} offsets已经过时，更新为: $left")
+              left
+            case _ => offset.toLong
+          }
+          tp -> finalOffset
+      }
+    })
 
     // fix bug
     // 如果GroupId 已经在Hbase存在了，这个时候新加一个topic ，则新加的Topic 不会被消费
@@ -48,20 +47,16 @@ private[kafka] class RedisClusterOffsetsManager(val sparkConf: SparkConf) extend
 
 
   override def updateOffsets(groupId: String, offsetInfos: Map[TopicPartition, Long]): Unit = {
-    safeCloseCluster { jedis =>
-      for ((tp, offset) <- offsetInfos) {
-        jedis.hset(generateKey(groupId, tp.topic), tp.partition().toString, offset.toString)
-      }
-    }(connectForCluster(storeParams))
+    for ((tp, offset) <- offsetInfos) {
+      jedis.hset(generateKey(groupId, tp.topic), tp.partition().toString, offset.toString)
+    }
     logInfo(s"updateOffsets [ $groupId,${offsetInfos.mkString(",")} ]")
   }
 
   override def delOffsets(groupId: String, topics: Set[String]): Unit = {
-    safeCloseCluster { jedis =>
-      for (topic <- topics) {
-        jedis.del(generateKey(groupId, topic))
-      }
-    }(connectForCluster(storeParams))
+    for (topic <- topics) {
+      jedis.del(generateKey(groupId, topic))
+    }
     logInfo(s"delOffsets [ $groupId,${topics.mkString(",")} ]")
   }
 }
