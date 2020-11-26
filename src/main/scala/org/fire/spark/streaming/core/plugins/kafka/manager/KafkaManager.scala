@@ -33,8 +33,14 @@ private[kafka] class KafkaManager(val sparkConf: SparkConf) extends Logging with
   private lazy val offsetsManager = {
     sparkConf.get("spark.source.kafka.offset.store.class", "none").trim match {
       case "none" =>
+
         sparkConf.get("spark.source.kafka.offset.store.type", "none").trim.toLowerCase match {
-          case "redis" => new RedisOffsetsManager(sparkConf)
+          case "redis" =>
+            sparkConf.get("spark.source.kafka.offset.store.redis.cluster", "false") match {
+              case "true" => new RedisClusterOffsetsManager(sparkConf)
+              case _ => new RedisOffsetsManager(sparkConf)
+            }
+
           case "hbase" => new HbaseOffsetsManager(sparkConf)
           case "kafka" => new DefaultOffsetsManager(sparkConf)
           case "none" => new DefaultOffsetsManager(sparkConf)

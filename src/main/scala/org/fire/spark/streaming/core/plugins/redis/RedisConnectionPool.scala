@@ -25,16 +25,16 @@ object RedisConnectionPool {
     new ConcurrentHashMap[RedisEndpoint, JedisCluster]()
 
   /**
-    * 创建一个Redis连接池
-    *
-    * @param params
-    *        redis.hosts
-    *        redis.port
-    *        redis.auth
-    *        redis.dbnum
-    *        redis.timeout
-    * @return
-    */
+   * 创建一个Redis连接池
+   *
+   * @param params
+   * redis.hosts
+   * redis.port
+   * redis.auth
+   * redis.dbnum
+   * redis.timeout
+   * @return
+   */
   def connect(params: Map[String, String]): Jedis = {
 
     val hosts = params.getOrElse("redis.hosts", "localhost").split(",").map(_.trim)
@@ -50,11 +50,11 @@ object RedisConnectionPool {
 
 
   /**
-    * 随机选择一个 RedisEndpoint 创建 或者获取一个Redis 连接池
-    *
-    * @param res
-    * @return
-    */
+   * 随机选择一个 RedisEndpoint 创建 或者获取一个Redis 连接池
+   *
+   * @param res
+   * @return
+   */
   def connect(res: Array[RedisEndpoint]): Jedis = {
     assert(res.length > 0, "The RedisEndpoint array is empty!!!")
     val rnd = scala.util.Random.nextInt().abs % res.length
@@ -67,11 +67,11 @@ object RedisConnectionPool {
   }
 
   /**
-    * 创建或者获取一个Redis 连接池
-    *
-    * @param re
-    * @return
-    */
+   * 创建或者获取一个Redis 连接池
+   *
+   * @param re
+   * @return
+   */
   def connect(re: RedisEndpoint): Jedis = {
     val pool = pools.getOrElseUpdate(re, createJedisPool(re))
     var sleepTime: Int = 4
@@ -92,11 +92,11 @@ object RedisConnectionPool {
   }
 
   /**
-    * 创建一个连接池
-    *
-    * @param re
-    * @return
-    */
+   * 创建一个连接池
+   *
+   * @param re
+   * @return
+   */
   def createJedisPool(re: RedisEndpoint): JedisPool = {
     println(s"createJedisPool with $re ")
     new JedisPool(poolConfig, re.host, re.port, re.timeout, re.auth, re.dbNum)
@@ -122,6 +122,31 @@ object RedisConnectionPool {
     poolConfig.setNumTestsPerEvictionRun(-1)
     poolConfig
   }
+
+  /**
+   * 创建一个Redis连接池
+   *
+   * @param params
+   * redis.hosts
+   * redis.port
+   * redis.auth
+   * redis.dbnum
+   * redis.timeout
+   * @return
+   */
+  def connectForCluster(params: Map[String, String]): JedisCluster = {
+
+    val hosts = params.getOrElse("redis.hosts", "localhost").split(",").map(_.trim)
+    val port = params.getOrElse("redis.port", "6379").toInt
+    val auth = Try(params("redis.auth")) getOrElse null
+    val dbNum = params.getOrElse("redis.dbnum", "0").toInt
+    val timeout = params.getOrElse("redis.timeout", "2000").toInt
+
+    val endpoints = hosts.map(RedisEndpoint(_, port, auth, dbNum, timeout))
+
+    connectForCluster(endpoints: _*)
+  }
+
 
   def connectForCluster(res: RedisEndpoint*): JedisCluster = {
 
@@ -149,6 +174,7 @@ object RedisConnectionPool {
     }
     result
   }
+
 
   def safeCloseCluster[R](f: JedisCluster => R)(implicit cluster: JedisCluster): R = {
     val result = f(cluster)
