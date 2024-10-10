@@ -12,7 +12,7 @@
     <properties>
 
         <spark.version>2.4.0</spark.version>
-        <hadoop.version>3.0.0</hadoop.version>
+        <hadoop.version>3.4.0</hadoop.version>
         <hbase.version>2.1.0</hbase.version>
         <hive.version>2.1.1</hive.version>
         <kafka.version>2.2.1</kafka.version>
